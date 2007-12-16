@@ -23,7 +23,7 @@
 from distutils.core import setup
 
 setup(name="RasCase",
-      version=0.1,
+      version='0.1',
       description="A simple grphical tool to develop Entity-Relationship models",
       author="Felipe Reyes",
       author_email="felipereyes@gmail.com",
@@ -32,7 +32,10 @@ setup(name="RasCase",
                 'rascase.views',
                 'rascase.controllers',
                 'rascase.core'],
-      package_data={'rascase':['resources/glade/*',
-                               'resources/pixmaps/*',
-                               'resources/uidefs/*']}
-      py_modules = ["rascase"])
+      package_data={
+        'rascase':
+            ['resources/glade/*',
+             'resources/pixmaps/*',
+             'resources/uidefs/*']
+        }
+      )

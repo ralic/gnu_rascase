@@ -21,6 +21,6 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 
-if __name == '__main__':
-    import rascase.controllers
-    rascase.core.ControlMainWindow()
+if __name__ == '__main__':
+    from rascase.controllers.main import ControlMainWindow
+    ControlMainWindow()

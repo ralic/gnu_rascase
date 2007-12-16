@@ -22,15 +22,16 @@
 
 import gtk
 import gtk.glade
+from pkg_resources import resource_string
 
 class ControlMainWindow:
-    def __init__(self)):
-        self.gladefile = "wndmain.glade"
-        self.win = gtk.glade.XML(self.gladefile, "wndmain")
+    def __init__(self):
+        self.gladefile = "/home/freyes/Projects/rascase.git/rascase/resources/glade/wndmain.glade"
+        self.gladewin = gtk.glade.XML(self.gladefile)
         signals_dic = {"on_wndmain_delete":gtk.main_quit}
-        self.win.signal_autoconnect(signals_dic)
-        aux = self.win.get_widget("vbox_main")
-        
+        self.gladewin.signal_autoconnect(signals_dic)
+        aux = self.gladewin.get_widget("vbox_main")
+        self.win = self.gladewin.get_widget("wndmain")
         if aux is None:
             print 'aux es none'
 
@@ -40,13 +41,19 @@ class ControlMainWindow:
         action_group = gtk.ActionGroup('my_actions')
         action_group.add_actions([
             ('NewModel', gtk.STOCK_NEW, None, '<Control>n', 'Crea un nuevo modelo', 
-             self.add),])
+             self.new_model),])
         uimanager.insert_action_group(action_group, 0)
-        uimanager.add_from_file("toolbar.xml")
+        uimanager.add_ui_from_file("/home/freyes/Projects/rascase.git/rascase/resources/uidefs/toolbar.xml")
 
         menubar = uimanager.get_widget("/Menubar")
         aux.pack_start(menubar)
 
         toolbar = uimanager.get_widget("/Toolbar")
         aux.pack_start(toolbar)
+
+        self.win.show_all()
+        gtk.main()
+
+    def new_model(self):
+        pass
 
