@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python2.4
 ##
 ## run-rascase.py
 ## Login : <freyes@yoda.>

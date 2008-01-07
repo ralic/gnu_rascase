@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python2.4
 ##
 ## setup.py
 ## Login : <freyes@yoda.>
@@ -25,7 +25,7 @@ from setuptools import setup
 
 setup(name="RasCase",
       version='0.1',
-      description="A simple grphical tool to develop Entity-Relationship models",
+      description="A simple tool to develop Entity-Relationship models",
       author="Felipe Reyes",
       author_email="felipereyes@gmail.com",
       url="http://rascase.linuxdiinf.org",

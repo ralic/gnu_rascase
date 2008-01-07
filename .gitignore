@@ -5,4 +5,5 @@
 *~
 
 #ignore the output of the egg's build
-build/
+build/*
+RasCase.egg-info/*

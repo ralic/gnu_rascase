@@ -44,7 +44,7 @@ from rascase.views import main
 class ControlMainWindow:
     def __init__(self):
         from pkg_resources import resource_string
-        print resource_string('glade', 'wndmain.glade')
+        resource_string('rascase.resources.glade', 'wndmain.glade')
         self.viewmain = main.ViewMainWindow(self)
         gtk.main()
             
