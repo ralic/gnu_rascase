@@ -1,3 +1,4 @@
+# coding: utf-8
 ##
 ## components.py
 ## Login : <freyes@yoda.>
@@ -24,6 +25,48 @@ import goocanvas
 import gobject
 import gtk
 
+class AttributeComponent(goocanvas.Text):
+    """Componente gráfico que se pone dentro de una entidad"""
+    def __init__(self, name):
+        self.default_value = None # 
+        self.mandatory = False # 
+        self.primary_key = False # 
+        self.data_type = None # 
+        text = name + "\t"
+        if self.mandatory:
+            text = text + "True"
+        else:
+            text = text + "False"
+        goocanvas.Text.__init__(self, text=text, 
+				anchor=gtk.ANCHOR_SE,
+				can_focus = False)
+
+    def refresh(self):
+        pass
+
+    def set_primary_key (self, valor) :
+        pass
+
+    def get_primary_key (self) :
+        pass
+
+    def set_default_value (self, value) :
+        pass
+
+    def get_default_value (self) :
+        pass
+    def set_data_type (self, datatype) :
+        pass
+
+    def get_data_type (self) :
+        pass
+    
+    def set_mandatory (self, mandatory) :
+        pass
+    
+    def get_mandatory (self) :
+        pass
+
 class DragBox(goocanvas.Rect):
 
     def __init__(self,name,x,y):
@@ -35,11 +78,10 @@ class DragBox(goocanvas.Rect):
             line_width = 0.5,
             fill_color = "black",
             visibility = goocanvas.ITEM_HIDDEN)
-        self.name = name
-        self.dragging = False
 
-        print type(self.props.fill_color)
-        
+        self.name = name
+        self._dragging = False
+
         #conexion de senales
         self.connect("button_press_event",self.on_button_press)
         self.connect("button_release_event",self.on_button_release)
@@ -47,21 +89,28 @@ class DragBox(goocanvas.Rect):
         self.connect("enter_notify_event",self.on_enter_notify)
         self.connect("leave_notify_event",self.on_leave_notify)
 
+
+    def is_dragging(self):
+        if self._dragging == True:
+            return True
+        else:
+            return False
+        
     #senales
     def on_button_press(self,item,target,event):
         
-        self.dragging = True
+        self._dragging = True
         fleur = gtk.gdk.Cursor(gtk.gdk.FLEUR)
         canvas = item.get_canvas ()
         canvas.pointer_grab(item, 
-                        gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.BUTTON_RELEASE_MASK,
-                        fleur, event.time)
+                            gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.BUTTON_RELEASE_MASK,
+                            fleur, event.time)
         self.drag_x = event.x
         self.drag_y = event.y
         return True
     
     def on_button_release(self,item,target,event):
-        self.dragging = False
+        self._dragging = False
         canvas = item.get_canvas ()
         canvas.pointer_ungrab(item, event.time)
             
@@ -76,7 +125,7 @@ class DragBox(goocanvas.Rect):
     def on_motion(self,item,target,event):
         canvas = item.get_canvas ()
 
-        if not (event.state == gtk.gdk.BUTTON1_MASK) and not self.dragging:
+        if not (event.state == gtk.gdk.BUTTON1_MASK) and not self._dragging:
             return False
         
         new_x = event.x
@@ -84,8 +133,11 @@ class DragBox(goocanvas.Rect):
         if item.name == 'N':
             dif = new_y - self.drag_y
             item.translate(0,dif)
-            item.get_parent().cuerpo.props.height = item.get_parent().cuerpo.props.height - dif
-            item.get_parent().cuerpo.translate(0,dif)
+
+            item.get_parent().get_body().props.height = \
+                item.get_parent().get_body().props.height - dif
+
+            item.get_parent().get_body().translate(0,dif)
 
             #make the dragbox follow the corners of the square
             item.get_parent().dragbox['NW'].translate (0,dif)
@@ -97,9 +149,14 @@ class DragBox(goocanvas.Rect):
             dif_x = new_x - self.drag_x
             dif_y = new_y - self.drag_y
             item.translate(dif_x, dif_y)
-            item.get_parent().cuerpo.props.width = item.get_parent().cuerpo.props.width + dif_x
-            item.get_parent().cuerpo.props.height = item.get_parent().cuerpo.props.height - dif_y
-            item.get_parent().cuerpo.translate(0, dif_y)
+
+            item.get_parent().get_body().props.width = \
+                item.get_parent().get_body().props.width + dif_x
+            
+            item.get_parent().get_body().props.height = \
+                item.get_parent().get_body().props.height - dif_y
+
+            item.get_parent().get_body().translate(0, dif_y)
 
             #make the dragbox follow the corner
             item.get_parent().dragbox['NW'].translate(0, dif_y)
@@ -110,7 +167,9 @@ class DragBox(goocanvas.Rect):
         elif item.name == 'E':
             dif = new_x - self.drag_x
             item.translate(dif,0)
-            item.get_parent().cuerpo.props.width = item.get_parent().cuerpo.props.width + dif
+           
+            item.get_parent().get_body().props.width = \
+                item.get_parent().get_body().props.width + dif
 
             #make the dragbox
             item.get_parent().dragbox['NE'].translate (dif, 0)
@@ -122,8 +181,12 @@ class DragBox(goocanvas.Rect):
             dif_x = new_x - self.drag_x
             dif_y = new_y - self.drag_y
             item.translate(dif_x, dif_y)
-            item.get_parent().cuerpo.props.width = item.get_parent().cuerpo.props.width + dif_x
-            item.get_parent().cuerpo.props.height = item.get_parent().cuerpo.props.height + dif_y
+            
+            item.get_parent().get_body().props.width = \
+                item.get_parent().get_body().props.width + dif_x
+
+            item.get_parent().get_body().props.height = \
+                item.get_parent().get_body().props.height + dif_y
 
             #move the dragbox
             item.get_parent().dragbox['N'].translate (dif_x/2, 0)
@@ -136,7 +199,9 @@ class DragBox(goocanvas.Rect):
         elif item.name == 'S':
             dif = new_y - self.drag_y
             item.translate(0,dif)
-            item.get_parent().cuerpo.props.height = item.get_parent().cuerpo.props.height + dif
+            
+            item.get_parent().get_body().props.height = \
+                item.get_parent().get_body().props.height + dif
 
             #move the dragbox
             item.get_parent().dragbox['W'].translate (0, dif/2)
@@ -148,9 +213,14 @@ class DragBox(goocanvas.Rect):
             dif_x = new_x - self.drag_x
             dif_y = new_y - self.drag_y
             item.translate(dif_x,dif_y)
-            item.get_parent().cuerpo.props.height = item.get_parent().cuerpo.props.height + dif_y
-            item.get_parent().cuerpo.props.width = item.get_parent().cuerpo.props.width - dif_x
-            item.get_parent().cuerpo.translate(dif_x,0)
+
+            item.get_parent().get_body().props.height = \
+                item.get_parent().get_body().props.height + dif_y
+
+            item.get_parent().get_body().props.width = \
+                item.get_parent().get_body().props.width - dif_x
+
+            item.get_parent().get_body().translate(dif_x,0)
 
             #move the dragbox
             item.get_parent().dragbox['N'].translate(dif_x/2, 0)
@@ -163,8 +233,11 @@ class DragBox(goocanvas.Rect):
         elif item.name == 'W':
             dif = new_x - self.drag_x
             item.translate(dif, 0)
-            item.get_parent().cuerpo.props.width = item.get_parent().cuerpo.props.width - dif
-            item.get_parent().cuerpo.translate(dif,0)
+
+            item.get_parent().get_body().props.width = \
+                item.get_parent().get_body().props.width - dif
+
+            item.get_parent().get_body().translate(dif,0)
 
             #move the dragbox
             item.get_parent().dragbox['N'].translate (dif/2, 0)
@@ -176,9 +249,13 @@ class DragBox(goocanvas.Rect):
             dif_x = new_x - self.drag_x
             dif_y = new_y - self.drag_y
             item.translate(dif_x,dif_y)
-            item.get_parent().cuerpo.props.height = item.get_parent().cuerpo.props.height - dif_y
-            item.get_parent().cuerpo.props.width = item.get_parent().cuerpo.props.width - dif_x
-            item.get_parent().cuerpo.translate(dif_x,dif_y)
+            item.get_parent().get_body().props.height = \
+                item.get_parent().get_body().props.height - dif_y
+
+            item.get_parent().get_body().props.width = \
+                item.get_parent().get_body().props.width - dif_x
+
+            item.get_parent().get_body().translate(dif_x,dif_y)
 
             #move the dragbox
             item.get_parent().dragbox['E'].translate (0, dif_y/2)
@@ -202,14 +279,21 @@ class EntityComponent(goocanvas.Group):
     def __init__(self,x,y):
         goocanvas.Group.__init__(self, can_focus = True)
         
-        self.cuerpo = goocanvas.Rect(x=x,y=y,
-            width=self.ANCHO,
-            height=self.ALTO,
-            line_width=self.ANCHO_LINEA,
-            fill_color=self.COLOR_RELLENO)
-            
-        self.add_child(self.cuerpo)
-        self.dragging= False
+        self._cuerpo = goocanvas.Table(width=EntityComponent.ANCHO,
+            height=EntityComponent.ALTO,
+            line_width=EntityComponent.ANCHO_LINEA,
+            fill_color=EntityComponent.COLOR_RELLENO)
+        self._cuerpo.translate(x,y)
+        hijo = goocanvas.Text(parent=self._cuerpo, 
+                              text="NuevaEntidad", 
+                              anchor=gtk.ANCHOR_SE, 
+                              fill_color = EntityComponent.COLOR_RELLENO)
+
+        self._cuerpo.set_child_properties(hijo, row=0, column=0)
+        self._num_columns=1
+
+        self.add_child(self._cuerpo)
+        self._dragging= False
         
         self.dragbox = {
             'NW': DragBox('NW',x-5,y-5),
@@ -237,7 +321,17 @@ class EntityComponent(goocanvas.Group):
         
         
 
-    
+    def add_attribute(self,attribute):
+        """Agrega un nuevo atributo a la entidad"""
+
+        self._cuerpo.add_child(attribute)
+        self._cuerpo.set_child_properties(attribute,
+                                          row=self._num_columns,
+                                          column=0,
+					  x_align=0.0)
+        print "numero de columnas", self._num_columns
+        self._num_columns += 1
+        self.request_update()
 
     #reescritura de metodos
     
@@ -245,11 +339,7 @@ class EntityComponent(goocanvas.Group):
     def on_double_click_press(self,item,target,event):
         if event.type == gtk.gdk._2BUTTON_PRESS:
             print "*** se hizo doble click", type(target)
-            if target is __main__.entidad:
-                print "es entidad :D"
-            else:
-                print "buu, no es entidad"
-
+            
             
     def on_focus_in (self, item, target_item, event):
         for aux in self.dragbox.keys():
@@ -265,10 +355,10 @@ class EntityComponent(goocanvas.Group):
         canvas.grab_focus(item)
         
         for aux in self.dragbox.keys():
-            if self.dragbox[aux].dragging:
+            if self.dragbox[aux].is_dragging():
                 return True
             
-        self.dragging = True
+        self._dragging = True
         fleur = gtk.gdk.Cursor(gtk.gdk.FLEUR)
         canvas = item.get_canvas ()
         canvas.pointer_grab(item, 
@@ -280,10 +370,10 @@ class EntityComponent(goocanvas.Group):
     
     def on_button_release(self,item,target,event):
         for aux in self.dragbox.keys():
-            if self.dragbox[aux].dragging:
+            if self.dragbox[aux].is_dragging():
                 return True
 
-        self.dragging = False
+        self._dragging = False
         canvas = item.get_canvas ()
         canvas.pointer_ungrab(item, event.time)
         return True
@@ -296,12 +386,12 @@ class EntityComponent(goocanvas.Group):
         
     def on_motion(self,item,target,event):
         for aux in self.dragbox.keys():
-            if self.dragbox[aux].dragging:
+            if self.dragbox[aux].is_dragging():
                 return True
          
         canvas = item.get_canvas ()
 
-        if not (event.state == gtk.gdk.BUTTON1_MASK) and not self.dragging:
+        if not (event.state == gtk.gdk.BUTTON1_MASK) and not self._dragging:
             return False
         
         new_x = event.x
@@ -310,56 +400,32 @@ class EntityComponent(goocanvas.Group):
         self.emit('on-movement')
         
 
-def cs(item):
-    print "on motion: ", item
+    #get-set de propiedad
+    def get_body(self):
+        """Retorna el cuerpo del objeto
 
-        
-def main():
-    window = gtk.Window()
-    window.set_default_size(300, 300)
-    window.set_position(gtk.WIN_POS_CENTER)
-    
-    window.show()
-    window.connect("destroy", lambda w: gtk.main_quit())
-    
-    scrolled_win = gtk.ScrolledWindow()
-    scrolled_win.set_shadow_type(gtk.SHADOW_IN)
-    scrolled_win.show()
-    window.add(scrolled_win)
-    
-    canvas = goocanvas.Canvas()
-    canvas.set_flags(gtk.CAN_FOCUS)
-    canvas.set_size_request(300, 300)
-    canvas.set_bounds(0, 0, 600, 600)
+        """
+        return self._cuerpo
 
-    root = canvas.get_root_item()
-    
-    item = entidad(0,40)
-    root.add_child(item)
+class Canvas:
+    """Esta clase configura el canvas que provee goocanvas
 
-    item = entidad(50,50)
-    item.connect("on-movement",cs)
-    root.add_child(item)
+    """
+    def __init__(self):
+        self.scrolled_win = gtk.ScrolledWindow()
+        self.scrolled_win.set_shadow_type(gtk.SHADOW_IN)
+        self.scrolled_win.show()
+            
+        self._mycanvas = goocanvas.Canvas()
+        self._mycanvas.set_flags(gtk.CAN_FOCUS)
+        self._mycanvas.set_size_request(300, 300)
+        self._mycanvas.set_bounds(0, 0, 600, 600)
+        root = self._mycanvas.get_root_item()
+        self._mycanvas.set_root_item(root)
+        self._mycanvas.show()
     
-    item = goocanvas.Table(width=100, height=100, fill_color="red")
-    root.add_child(item)
-    hijo = goocanvas.Text(parent=item, text="Factura", anchor=gtk.ANCHOR_SE, fill_color = "blue")
-    item.set_child_properties(hijo, row=0, column=0)
-    #item.add_child(hijo)
-    hijo = goocanvas.Text(parent=item, text="atributo1", anchor=gtk.ANCHOR_SE, fill_color = "yellow")
-    item.set_child_properties(hijo, row=1, column=0)
-    #item.add_child(hijo)
-    hijo = goocanvas.Text(parent=item, text="atributo2", anchor=gtk.ANCHOR_SE, fill_color = "yellow")
-    item.set_child_properties(hijo, row=2, column=0)
-    #item.add_child(hijo)
+        self.scrolled_win.add(self._mycanvas)
     
     
-    canvas.set_root_item(root)
-    canvas.show()
-    
-    scrolled_win.add(canvas)
-    
-
-    gtk.main()
-    
-
+    def add_child(self, child):
+        self._mycanvas.get_root_item().add_child(child)

@@ -1,1 +1,7 @@
+Requirements:
+* pygtk 2.12
+* pyodf
+* pygoocanvas
+
+
 The colors used are inspired in the palettes recommended by the tango project

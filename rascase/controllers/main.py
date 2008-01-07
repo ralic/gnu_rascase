@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ##
 ## main.py
 ## Login : <freyes@yoda.>
@@ -20,40 +21,33 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 
+# importa los modulos del sistema
+import sys
 import gtk
 import gtk.glade
 from pkg_resources import resource_string
 
+# this function code was taken from exaile <http://www.exaile.org>
+if sys.platform == 'linux2':
+    # Set process name.  Only works on Linux >= 2.1.57.
+    try:
+        import dl
+        libc = dl.open('/lib/libc.so.6')
+        libc.call('prctl', 15, 'rascase\0', 0, 0, 0) # 15 is PR_SET_NAME
+    except:
+        pass
+# end exaile code
+
+# importa los modulos locales
+from rascase.views import main
+
 class ControlMainWindow:
     def __init__(self):
-        self.gladefile = "/home/freyes/Projects/rascase.git/rascase/resources/glade/wndmain.glade"
-        self.gladewin = gtk.glade.XML(self.gladefile)
-        signals_dic = {"on_wndmain_delete":gtk.main_quit}
-        self.gladewin.signal_autoconnect(signals_dic)
-        aux = self.gladewin.get_widget("vbox_main")
-        self.win = self.gladewin.get_widget("wndmain")
-        if aux is None:
-            print 'aux es none'
-
-        uimanager = gtk.UIManager()
-        accelgroup = uimanager.get_accel_group()
-        self.win.add_accel_group(accelgroup)
-        action_group = gtk.ActionGroup('my_actions')
-        action_group.add_actions([
-            ('NewModel', gtk.STOCK_NEW, None, '<Control>n', 'Crea un nuevo modelo', 
-             self.new_model),])
-        uimanager.insert_action_group(action_group, 0)
-        uimanager.add_ui_from_file("/home/freyes/Projects/rascase.git/rascase/resources/uidefs/toolbar.xml")
-
-        menubar = uimanager.get_widget("/Menubar")
-        aux.pack_start(menubar)
-
-        toolbar = uimanager.get_widget("/Toolbar")
-        aux.pack_start(toolbar)
-
-        self.win.show_all()
+        from pkg_resources import resource_string
+        print resource_string('glade', 'wndmain.glade')
+        self.viewmain = main.ViewMainWindow(self)
         gtk.main()
-
+            
     def new_model(self):
         pass
 

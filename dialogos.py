@@ -1,8 +1,7 @@
-#!/usr/bin/python2.5
 ##
-## setup.py
+## dialogos.py
 ## Login : <freyes@yoda.>
-## Started on  Fri Dec 14 22:14:38 2007 Felipe Reyes
+## Started on  Tue Dec 18 19:38:00 2007 Felipe Reyes
 ## $Id$
 ## 
 ## Copyright (C) 2007 Felipe Reyes
@@ -21,22 +20,12 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 
-from setuptools import setup
+import gtk
 
-setup(name="RasCase",
-      version='0.1',
-      description="A simple grphical tool to develop Entity-Relationship models",
-      author="Felipe Reyes",
-      author_email="felipereyes@gmail.com",
-      url="http://rascase.linuxdiinf.org",
-      packages=['rascase',
-                'rascase.views',
-                'rascase.controllers',
-                'rascase.core'],
-      package_data={
-        'rascase':
-            ['resources/glade/*',
-             'resources/pixmaps/*',
-             'resources/uidefs/*']
-        }
-      )
+
+file_dlg = gtk.FileChooserDialog(title="Seleccionar Modelo", 
+                                 action=gtk.FILE_CHOOSER_ACTION_OPEN, 
+                                 (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                                  gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+
+gtk.main()
