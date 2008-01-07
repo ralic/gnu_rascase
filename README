@@ -1,7 +1,20 @@
-Requirements:
+Rascase (http://www.rascase.org?) is the result of my project degree, 
+i am doing this with the intention of learn more about the database design 
+and to give a simple tool to the FLOSS community.
+
+This tool is mainly focused on the design of entity-relationship models, and
+not in the development of physical data models, but this second feature will not
+be excluded of rascase.
+
+The requirements to run rascase are at least:
 * pygtk 2.12
 * pyodf
 * pygoocanvas
 
+NOTE: some dependencies could be added without warning until the first release 
+candidate.
 
-The colors used are inspired in the palettes recommended by the tango project
+
+The colors used are inspired in the palettes recommended by the tango project 
+<http://tango.freedesktop.org>
+
