@@ -7,3 +7,7 @@
 #ignore the output of the egg's build
 build/*
 RasCase.egg-info/*
+
+#ignore the backup files produced by emacs
+\#*\#
+.\#*
