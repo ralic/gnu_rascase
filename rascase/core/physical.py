@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+Este modulo contiene las clases relacionadas con la implementación de las funcionalidades a nivel de modelo para la gestión de 'modelos físicos'
+
+"""
 ##
 ## physical.py
 ## Login : <freyes@yoda>
@@ -20,3 +25,29 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 
+import rascase.core.base as base
+
+class PhysicalModel(base.ModelBase):
+    def __init__(self, logicalmodel, path=None):
+        self._script_plugin = None
+        self._dict_plugin = None
+        self._tables_list = None
+        self._references = None
+
+    def generate_script(self, path=None):
+        return False
+
+    def generate_dictionary(self, path=None):
+        return False
+
+    def set_script_plugin(self, plugin):
+        pass
+
+    def get_script_plugin(self):
+        return self._script_plugin
+
+    def set_dict_plugin(self, plugin):
+        pass
+
+    def get_dict_plugin(self):
+        return self._dict_plugin

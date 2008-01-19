@@ -1,0 +1,113 @@
+2008-01-19  Felipe Reyes <felipereyes@gmail.com>
+
+	* .gitignore, rascase/core/base.py, rascase/core/logical.py,
+	rascase/core/physical.py, rascase/views/main.py: starting to
+	populate the project with the classes of design diagram
+
+2008-01-07  Felipe Reyes <felipereyes@gmail.com>
+
+	* .gitignore, rascase/controllers/main.py,
+	rascase/resources/__init__.py, rascase/resources/glade/__init__.py,
+	rascase/views/__init__.pyc, rascase/views/components.pyc,
+	rascase/views/main.pyc, run-rascase.py, setup.py: now the
+	package_data are python modules, this is to let pkg_resources access
+	to the glade files and get the path (somebody suggests a better
+	way?)
+
+2008-01-07  Felipe Reyes <felipereyes@gmail.com>
+
+	* .gitignore: added a gitignore file to avoid problems with the
+	addition of files like .pyc, build directory...
+
+2008-01-07  Felipe Reyes <felipereyes@gmail.com>
+
+	* rascase/resources/uidef/toolbar.xml: now removing toolbar
+	definition (not used)
+
+2008-01-07  Felipe Reyes <felipereyes@gmail.com>
+
+	* rascase/resources/uidef/toolbar.xml: fixing the mess that i got in
+	the repo :-\
+
+2008-01-07  Felipe Reyes <felipereyes@gmail.com>
+
+	* rascase/resources/uidefs/toolbar.xml: deleted the toolbar
+	definition (unused)
+
+2008-01-07  Felipe Reyes <felipereyes@gmail.com>
+
+	* README, RasCase.egg-info/PKG-INFO, RasCase.egg-info/SOURCES.txt,
+	RasCase.egg-info/dependency_links.txt,
+	RasCase.egg-info/top_level.txt: deleted of the repo the egg-info
+	related files added by mistake before updated the README file
+
+2008-01-07  Felipe Reyes <felipereyes@gmail.com>
+
+	* README, RasCase.egg-info/PKG-INFO, RasCase.egg-info/SOURCES.txt,
+	RasCase.egg-info/dependency_links.txt,
+	RasCase.egg-info/top_level.txt, dialogos.py,
+	rascase/controllers/main.py, rascase/controllers/main.pyc,
+	rascase/resources/glade/entity-icon.png,
+	rascase/resources/glade/entity-icon.svg,
+	rascase/resources/glade/inheritance-icon.png,
+	rascase/resources/glade/label-icon.png,
+	rascase/resources/glade/prototipo.glade,
+	rascase/resources/glade/rectangle-icon.png,
+	rascase/resources/glade/relationship-icon.png,
+	rascase/resources/glade/wndabout.glade,
+	rascase/resources/glade/wndcolorselection.glade,
+	rascase/resources/glade/wndeditentity.glade,
+	rascase/resources/glade/wndeditentity.py,
+	rascase/resources/glade/wndeditlabel.glade,
+	rascase/resources/glade/wndeditlabel.py,
+	rascase/resources/glade/wndeditpreferences.glade,
+	rascase/resources/glade/wndeditpreferences.py,
+	rascase/resources/glade/wndeditreference.glade,
+	rascase/resources/glade/wndeditreference.py,
+	rascase/resources/glade/wndeditrelationship.glade,
+	rascase/resources/glade/wndedittable.glade,
+	rascase/resources/glade/wndedittable.py,
+	rascase/resources/glade/wndmain.glade, rascase/views/__init__.pyc,
+	rascase/views/components.py, rascase/views/components.pyc,
+	rascase/views/main.py, rascase/views/main.pyc, run-rascase.py,
+	setup.py: organizing the source code
+
+2008-01-07  Felipe Reyes <felipereyes@gmail.com>
+
+	* rascase/__init__.pyc, rascase/controllers/__init__.pyc: The
+	interface were polished, now the setup.py script works
+
+2007-12-16  Felipe Reyes <felipereyes@gmail.com>
+
+	* README, rascase/__init__.pyc, rascase/controllers/__init__.pyc,
+	rascase/controllers/main.py, rascase/controllers/main.pyc,
+	rascase/resources/glade/wndmain.glade,
+	rascase/resources/uidefs/toolbar.xml, rascase/views/components.py,
+	run-rascase.py, setup.py: the code used to test the functionalities
+	of goocanvas were included in the components module
+
+2007-12-15  Felipe Reyes <felipereyes@gmail.com>
+
+	* rascase/controllers/main.py, rascase/resources/uidef/toolbar.xml,
+	run-rascase.py, setup.py: a few file added, and a script to run the
+	app
+
+2007-12-15  Felipe Reyes <felipereyes@gmail.com>
+
+	* glade/prototipo.glade, rascase/resources/glade/wndmain.glade: the
+	source code was configurated, based in the pida structure
+
+2007-12-14  Felipe Reyes <felipereyes@gmail.com>
+
+	* rascase/__init__.py, rascase/controllers/__init__.py,
+	rascase/core/__init__.py, rascase/views/__init__.py: the main
+	modules were created
+
+2007-12-14  Felipe Reyes <felipereyes@gmail.com>
+
+	* setup.py: setup.py script added to install the software
+
+2007-12-10  Felipe Reyes <felipereyes@gmail.com>
+
+	* Initial import
+
