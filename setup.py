@@ -38,5 +38,8 @@ setup(name="RasCase",
             ['resources/glade/*',
              'resources/pixmaps/*',
              'resources/uidefs/*']
-        }
+        },
+      entry_points = {'console_scripts':
+                      ['rascase = rascase.controllers.main:start',]
+                      }
       )

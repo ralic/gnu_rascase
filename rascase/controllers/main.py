@@ -27,19 +27,25 @@ import gtk
 import gtk.glade
 from pkg_resources import resource_string
 
-# this function code was taken from exaile <http://www.exaile.org>
-if sys.platform == 'linux2':
-    # Set process name.  Only works on Linux >= 2.1.57.
-    try:
-        import dl
-        libc = dl.open('/lib/libc.so.6')
-        libc.call('prctl', 15, 'rascase\0', 0, 0, 0) # 15 is PR_SET_NAME
-    except:
-        pass
-# end exaile code
-
 # importa los modulos locales
 from rascase.views import main
+
+
+def start():
+    """
+    Esta función es solo para inicializar la aplicación
+    """
+    # this function code was taken from exaile <http://www.exaile.org>
+    if sys.platform == 'linux2':
+        # Set process name.  Only works on Linux >= 2.1.57.
+        try:
+            import dl
+            libc = dl.open('/lib/libc.so.6')
+            libc.call('prctl', 15, 'rascase\0', 0, 0, 0) # 15 is PR_SET_NAME
+        except:
+            pass
+    # end exaile code
+    ControlMainWindow()
 
 class ControlMainWindow:
     def __init__(self):
