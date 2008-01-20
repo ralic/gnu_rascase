@@ -42,8 +42,3 @@ class ModelBase:
     def check(self):
         return None #retorna una lista de errores
 
-    
-
-
-
-    
