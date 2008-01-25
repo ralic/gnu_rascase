@@ -33,47 +33,28 @@ import goocanvas
 
 from rascase.views import components
 
-#Tango colors taken from 
-#http://tango.freedesktop.org/Tango_Icon_Theme_Guidelines
-TANGO_COLOR_BUTTER_LIGHT = int("fce94fff",16)
-TANGO_COLOR_BUTTER_MID = int("edd400ff",16)
-TANGO_COLOR_BUTTER_DARK = int("c4a000ff",16)
-TANGO_COLOR_ORANGE_LIGHT = int("fcaf3eff",16)
-TANGO_COLOR_ORANGE_MID = int("f57900",16)
-TANGO_COLOR_ORANGE_DARK = int("ce5c00ff",16)
-TANGO_COLOR_CHOCOLATE_LIGHT = int("e9b96eff",16)
-TANGO_COLOR_CHOCOLATE_MID = int("c17d11ff",16)
-TANGO_COLOR_CHOCOLATE_DARK = int("8f5902ff",16)
-TANGO_COLOR_CHAMELEON_LIGHT = int("8ae234ff",16)
-TANGO_COLOR_CHAMELEON_MID = int("73d216ff",16)
-TANGO_COLOR_CHAMELEON_DARK = int("4e9a06ff",16)
-TANGO_COLOR_SKYBLUE_LIGHT = int("729fcfff",16)
-TANGO_COLOR_SKYBLUE_MID = int("3465a4ff",16)
-TANGO_COLOR_SKYBLUE_DARK = int("204a87ff",16)
-TANGO_COLOR_PLUM_LIGHT = int("ad7fa8ff",16)
-TANGO_COLOR_PLUM_MID = int("75507bff",16)
-TANGO_COLOR_PLUM_DARK = int("5c3566ff",16)
-TANGO_COLOR_SCARLETRED_LIGHT = int("ef2929ff",16)
-TANGO_COLOR_SCARLETRED_MID = int("cc0000ff",16)
-TANGO_COLOR_SCARLETRED_DARK = int("a40000ff",16)
-TANGO_COLOR_ALUMINIUM1_LIGHT = int("eeeeecff",16)
-TANGO_COLOR_ALUMINIUM1_MID = int("d3d7cfff",16)
-TANGO_COLOR_ALUMINIUM1_DARK = int("babdb6ff",16)
-TANGO_COLOR_ALUMINIUM2_LIGHT = int("888a85ff",16)
-TANGO_COLOR_ALUMINIUM2_MID = int("555753ff",16)
-TANGO_COLOR_ALUMINIUM2_DARK = int("2e3436ff",16)
-TRANSPARENT_COLOR = int("00000000",16)
-
 class ViewMainWindow:
     """Vista principal
 
     En esta vista se despliegan los elementos más importantes del software como el canvas, la barra de herramientas y de menu, entre otros
 
     """
-    def __init__(self,control):
-        self.control = control #control que es dueño de la vista
+    def __init__(self,control, file_=None):
+        self.control = control #control que es dueño de la vista        
         self.gladefile = "/home/freyes/Projects/rascase.git/rascase/resources/glade/wndmain.glade"
         self.wTree = gtk.glade.XML(self.gladefile)
+
+        ## widgets
+        self._main_toolbar = None
+        self._elements_toolbar = None
+        self._menubar = None
+
+        ## properties
+        self._files_opened = None
+        self._files_list = None
+        self._canvas_list = None
+        self._selected_item = None
+        
         signals_dic = {"on_wndmain_delete_event":gtk.main_quit}
         self.wTree.signal_autoconnect(signals_dic)
 
@@ -81,24 +62,11 @@ class ViewMainWindow:
         self.ntbk_main = self.wTree.get_widget("ntbk_main")
         self.canvas = [None]
         self.canvas[0] = components.Canvas()
-        
-        #item = components.EntityComponent(0,40)
-        #self.canvas[0].add_child(item)
 
-        #item = components.EntityComponent(50,50)
 
-        #hijo = goocanvas.Text(text="atributo 1\tP")
-        #hijo = components.AttributeComponent("atributo 1")
-        #item.add_attribute(hijo)
-
-        #hijo = goocanvas.Text(text="atributo 2")
-        #item.add_attribute(hijo)
-
-        #hijo = goocanvas.Text(text="atributo 3")
-        #item.add_attribute(hijo)
-        
-        #self.canvas[0].add_child(item)
-        
+        item = components.EntityComponent(20, 20)
+        self.canvas[0].add_child(item)
+        print 'item added'
         container = gtk.HBox()
         widget = gtk.Label("ejemplo.rxl")
         container.pack_start(widget)
@@ -157,3 +125,74 @@ class ViewMainWindow:
             print "self.win es none"
 
         self.win.show_all()
+
+
+    # signals
+
+    #TODO: construct the toolbars with the gtkmanager and not with glade-3
+    def on_new_project(self, menuitem):
+        pass
+
+    def on_new_model(self, menuitem):
+        pass
+
+    def on_open_project(self, menuitem):
+        pass
+
+    def on_open_model(self, menuitem):
+        pass
+
+    def on_add_model_to_project(self, menuitem):
+        pass
+
+    def on_remove_model(self, menuitem): #remove the model from the project
+        pass
+
+    #on the close button of the gtk.Notebook page is clicked
+    def on_close_file_clicked(self, menuitem):
+        pass
+
+    def on_add_entity_clicked(self, menuitem):
+        pass
+
+    def on_add_relationship_clicked(self, menuitem):
+        pass
+
+    def on_add_inheritance_clicked(self, menuitem):
+        pass
+
+    def on_add_label_clicked(self, menuitem):
+        pass
+
+    def on_add_rectangle_clicked(self,menuitem):
+        pass
+
+    #aqui se debe chequear el tipo de componente grafico que se quiere editar
+    #para luego hacer la llamada al método correspondiente
+    def on_edit_component(self, item, target_item, event):
+        pass
+
+    def on_delete_component(self, item, target_item, event):
+        pass
+
+    def on_generate_physical_model_clicked(self, menuitem):
+        pass
+
+    def on_btn_print_clicked(self, menuitem):
+        pass
+
+    def on_btn_export_clicked(self, menuitem):
+        pass
+
+    def on_btn_zoomin_clicked(self, menuitem):
+        pass
+    
+    def on_btn_zoomout_clicked(self, menuitem):
+        pass
+
+    def on_btn_send_to_back_clicked(self, menuitem):
+        pass
+
+    def on_btn_send_to_front_clicked(self, menuitem):
+        pass
+

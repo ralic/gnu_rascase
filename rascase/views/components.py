@@ -25,289 +25,142 @@ import goocanvas
 import gobject
 import gtk
 
-class AttributeComponent(goocanvas.Text):
-    """Componente gráfico que se pone dentro de una entidad"""
-    def __init__(self, name):
-        self.default_value = None # 
-        self.mandatory = False # 
-        self.primary_key = False # 
-        self.data_type = None # 
-        text = name + "\t"
-        if self.mandatory:
-            text = text + "True"
+import rascase.views.base
+
+class LineBaseComponent:
+    def __init__(self):
+        self._line_width = None
+        self._line_color = None
+
+    def set_line_width(self, value):
+        pass
+
+    def get_line_width(self):
+        pass
+
+    def set_line_color(self, value):
+        pass
+
+    def get_line_color(self):
+        pass
+
+class RectBaseComponent(goocanvas.Group):
+
+    _ANCHO = 100
+    _ALTO = 200
+    _ANCHO_LINEA = 1.0
+    _COLOR_RELLENO = rascase.views.base.TANGO_COLOR_SKYBLUE_LIGHT
+
+    def __init__(self, x, y, bodytype='rect'):
+        goocanvas.Group.__init__(self,can_focus = True)
+        
+        if (bodytype == 'table'):
+            self._body = goocanvas.Table(width=EntityComponent._ANCHO,
+                                         height=EntityComponent._ALTO,
+                                         line_width=EntityComponent._ANCHO_LINEA)
+        
+        elif (bodytype == 'rect'):
+            self._body = goocanvas.Rect(width=EntityComponent._ANCHO,
+                                        height=EntityComponent._ALTO,
+                                        line_width=EntityComponent._ANCHO_LINEA,
+                                        fill_color_rgba=EntityComponent._COLOR_RELLENO,
+                                        stroke_color="black")
         else:
-            text = text + "False"
-        goocanvas.Text.__init__(self, text=text, 
-				anchor=gtk.ANCHOR_SE,
-				can_focus = False)
+            raise RuntimeError
+            
+        self.translate(x, y)
+        print EntityComponent._COLOR_RELLENO
+        self.add_child(self._body)
+        self._dragging= False
+        
+        self.dragbox = {
+            'NW': rascase.views.base.DragBox('NW',-5,-5),
+            'N' : rascase.views.base.DragBox('N', self._ANCHO/2-2.5,-5),
+            'NE': rascase.views.base.DragBox('NE',self._ANCHO-5,-5),
+            'E' : rascase.views.base.DragBox('E', self._ANCHO-5,self._ALTO/2),
+            'SE': rascase.views.base.DragBox('SE',self._ANCHO-5,self._ALTO-5),
+            'S' : rascase.views.base.DragBox('S', self._ANCHO/2-2.5,self._ALTO-5),
+            'SW': rascase.views.base.DragBox('SW',-5, self._ALTO-5),
+            'W' : rascase.views.base.DragBox('W', -5,self._ALTO/2)
+            }
 
-    def refresh(self):
+        for item in self.dragbox.keys():
+            self.add_child(self.dragbox[item])
+        
+
+    def set_x(self, x):
         pass
 
-    def set_primary_key (self, valor) :
+    def get_x(self):
         pass
 
-    def get_primary_key (self) :
+    def set_y(self, y):
         pass
 
-    def set_default_value (self, value) :
-        pass
-
-    def get_default_value (self) :
-        pass
-    def set_data_type (self, datatype) :
-        pass
-
-    def get_data_type (self) :
+    def get_y(self):
         pass
     
-    def set_mandatory (self, mandatory) :
-        pass
-    
-    def get_mandatory (self) :
+    def set_width(self, width):
         pass
 
-class DragBox(goocanvas.Rect):
+    def get_width(self):
+        pass
 
-    def __init__(self,name,x,y):
-        goocanvas.Rect.__init__(self,
-            x = x,
-            y = y,
-            width = 10,
-            height = 10,
-            line_width = 0.5,
-            fill_color = "black",
-            visibility = goocanvas.ITEM_HIDDEN)
+    def set_height(self, height):
+        pass
 
-        self.name = name
-        self._dragging = False
+    def get_height(self):
+        pass
 
-        #conexion de senales
-        self.connect("button_press_event",self.on_button_press)
-        self.connect("button_release_event",self.on_button_release)
-        self.connect("motion_notify_event",self.on_motion)
-        self.connect("enter_notify_event",self.on_enter_notify)
-        self.connect("leave_notify_event",self.on_leave_notify)
+    def set_linecolor(self, color):
+        pass
 
+    def get_linecolor(self):
+        pass
 
-    def is_dragging(self):
-        if self._dragging == True:
-            return True
-        else:
-            return False
-        
-    #senales
-    def on_button_press(self,item,target,event):
-        
-        self._dragging = True
-        fleur = gtk.gdk.Cursor(gtk.gdk.FLEUR)
-        canvas = item.get_canvas ()
-        canvas.pointer_grab(item, 
-                            gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.BUTTON_RELEASE_MASK,
-                            fleur, event.time)
-        self.drag_x = event.x
-        self.drag_y = event.y
-        return True
-    
-    def on_button_release(self,item,target,event):
-        self._dragging = False
-        canvas = item.get_canvas ()
-        canvas.pointer_ungrab(item, event.time)
-            
-        return True
-        
-    def on_enter_notify(self,item,target,event):
-        item.props.fill_color = "yellow"
-        
-    def on_leave_notify(self,item,target,event):
-        item.props.fill_color = "black"
-        
-    def on_motion(self,item,target,event):
-        canvas = item.get_canvas ()
+    def set_linewidth(self, width):
+        pass
 
-        if not (event.state == gtk.gdk.BUTTON1_MASK) and not self._dragging:
-            return False
-        
-        new_x = event.x
-        new_y = event.y
-        if item.name == 'N':
-            dif = new_y - self.drag_y
-            item.translate(0,dif)
+    def get_linewidth(self):
+        pass
 
-            item.get_parent().get_body().props.height = \
-                item.get_parent().get_body().props.height - dif
+    def set_fillcolor(self, color):
+        pass
 
-            item.get_parent().get_body().translate(0,dif)
+    def get_fillcolor(self, color):
+        pass
 
-            #make the dragbox follow the corners of the square
-            item.get_parent().dragbox['NW'].translate (0,dif)
-            item.get_parent().dragbox['NE'].translate (0,dif)
-            item.get_parent().dragbox['W'].translate (0,dif/2)
-            item.get_parent().dragbox['E'].translate (0,dif/2)
+    def on_focus_in(self, item, target, event):
+        pass
 
-        elif item.name == 'NE':
-            dif_x = new_x - self.drag_x
-            dif_y = new_y - self.drag_y
-            item.translate(dif_x, dif_y)
+    def on_focus_out(self, item, target, event):
+        pass
 
-            item.get_parent().get_body().props.width = \
-                item.get_parent().get_body().props.width + dif_x
-            
-            item.get_parent().get_body().props.height = \
-                item.get_parent().get_body().props.height - dif_y
+    def on_button_press(self, item, target, event):
+        pass
 
-            item.get_parent().get_body().translate(0, dif_y)
+    def on_button_release(self, item, target, event):
+        pass
 
-            #make the dragbox follow the corner
-            item.get_parent().dragbox['NW'].translate(0, dif_y)
-            item.get_parent().dragbox['N'].translate(dif_x/2, dif_y)
-            item.get_parent().dragbox['E'].translate(dif_x, dif_y/2)
-            item.get_parent().dragbox['SE'].translate(dif_x, 0)
+    def on_enter_notify(self, item, target, event):
+        pass
 
-        elif item.name == 'E':
-            dif = new_x - self.drag_x
-            item.translate(dif,0)
-           
-            item.get_parent().get_body().props.width = \
-                item.get_parent().get_body().props.width + dif
+    def on_leave_notifiy(self, item, target, event):
+        pass
 
-            #make the dragbox
-            item.get_parent().dragbox['NE'].translate (dif, 0)
-            item.get_parent().dragbox['SE'].translate (dif, 0)
-            item.get_parent().dragbox['N'].translate (dif/2, 0)
-            item.get_parent().dragbox['S'].translate (dif/2, 0)
-
-        elif item.name == 'SE':
-            dif_x = new_x - self.drag_x
-            dif_y = new_y - self.drag_y
-            item.translate(dif_x, dif_y)
-            
-            item.get_parent().get_body().props.width = \
-                item.get_parent().get_body().props.width + dif_x
-
-            item.get_parent().get_body().props.height = \
-                item.get_parent().get_body().props.height + dif_y
-
-            #move the dragbox
-            item.get_parent().dragbox['N'].translate (dif_x/2, 0)
-            item.get_parent().dragbox['NE'].translate (dif_x, 0)
-            item.get_parent().dragbox['E'].translate (dif_x, dif_y/2)
-            item.get_parent().dragbox['S'].translate (dif_x/2, dif_y)
-            item.get_parent().dragbox['SW'].translate (0, dif_y)
-            item.get_parent().dragbox['W'].translate (0, dif_y/2)
-            
-        elif item.name == 'S':
-            dif = new_y - self.drag_y
-            item.translate(0,dif)
-            
-            item.get_parent().get_body().props.height = \
-                item.get_parent().get_body().props.height + dif
-
-            #move the dragbox
-            item.get_parent().dragbox['W'].translate (0, dif/2)
-            item.get_parent().dragbox['SW'].translate (0, dif)
-            item.get_parent().dragbox['SE'].translate (0, dif)
-            item.get_parent().dragbox['E'].translate (0, dif/2)
-
-        elif item.name == 'SW':
-            dif_x = new_x - self.drag_x
-            dif_y = new_y - self.drag_y
-            item.translate(dif_x,dif_y)
-
-            item.get_parent().get_body().props.height = \
-                item.get_parent().get_body().props.height + dif_y
-
-            item.get_parent().get_body().props.width = \
-                item.get_parent().get_body().props.width - dif_x
-
-            item.get_parent().get_body().translate(dif_x,0)
-
-            #move the dragbox
-            item.get_parent().dragbox['N'].translate(dif_x/2, 0)
-            item.get_parent().dragbox['NW'].translate (dif_x, 0)
-            item.get_parent().dragbox['W'].translate (dif_x, dif_y/2)
-            item.get_parent().dragbox['S'].translate (dif_x/2, dif_y)
-            item.get_parent().dragbox['SE'].translate (0, dif_y)
-            item.get_parent().dragbox['E'].translate (0, dif_y/2)
-
-        elif item.name == 'W':
-            dif = new_x - self.drag_x
-            item.translate(dif, 0)
-
-            item.get_parent().get_body().props.width = \
-                item.get_parent().get_body().props.width - dif
-
-            item.get_parent().get_body().translate(dif,0)
-
-            #move the dragbox
-            item.get_parent().dragbox['N'].translate (dif/2, 0)
-            item.get_parent().dragbox['NW'].translate (dif, 0)
-            item.get_parent().dragbox['SW'].translate (dif, 0)
-            item.get_parent().dragbox['S'].translate (dif/2, 0)
-
-        elif item.name == 'NW':
-            dif_x = new_x - self.drag_x
-            dif_y = new_y - self.drag_y
-            item.translate(dif_x,dif_y)
-            item.get_parent().get_body().props.height = \
-                item.get_parent().get_body().props.height - dif_y
-
-            item.get_parent().get_body().props.width = \
-                item.get_parent().get_body().props.width - dif_x
-
-            item.get_parent().get_body().translate(dif_x,dif_y)
-
-            #move the dragbox
-            item.get_parent().dragbox['E'].translate (0, dif_y/2)
-            item.get_parent().dragbox['NE'].translate (0, dif_y)
-            item.get_parent().dragbox['N'].translate (dif_x/2, dif_y)
-            item.get_parent().dragbox['W'].translate (dif_x, dif_y/2)
-            item.get_parent().dragbox['SW'].translate (dif_x, 0)
-            item.get_parent().dragbox['S'].translate (dif_x/2, 0)
+    def on_motion(self, item, target, event):
+        pass
 
 
-class EntityComponent(goocanvas.Group):
+class EntityComponent(RectBaseComponent):
     __gsignals__ = {
         'on-movement': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
         }
     
-    ANCHO = 100
-    ALTO = 200
-    ANCHO_LINEA = 1.0
-    COLOR_RELLENO = "#729fcf"
-    
     def __init__(self,x,y):
-        goocanvas.Group.__init__(self, can_focus = True)
-        
-        self._cuerpo = goocanvas.Table(width=EntityComponent.ANCHO,
-            height=EntityComponent.ALTO,
-            line_width=EntityComponent.ANCHO_LINEA,
-            fill_color=EntityComponent.COLOR_RELLENO)
-        self._cuerpo.translate(x,y)
-        hijo = goocanvas.Text(parent=self._cuerpo, 
-                              text="NuevaEntidad", 
-                              anchor=gtk.ANCHOR_SE, 
-                              fill_color = EntityComponent.COLOR_RELLENO)
+        #goocanvas.Group.__init__(self, can_focus = True)
+        RectBaseComponent.__init__(self, x, y)
 
-        self._cuerpo.set_child_properties(hijo, row=0, column=0)
-        self._num_columns=1
-
-        self.add_child(self._cuerpo)
-        self._dragging= False
-        
-        self.dragbox = {
-            'NW': DragBox('NW',x-5,y-5),
-            'N' : DragBox('N',(x+self.ANCHO)/2,y-5),
-            'NE': DragBox('NE',(x+self.ANCHO)-5,y-5),
-            'E' : DragBox('E',(x+self.ANCHO)-5,(y+self.ALTO)/2),
-            'SE': DragBox('SE',(x+self.ANCHO)-5,(y+self.ALTO)-5),
-            'S' : DragBox('S',(x+self.ANCHO)/2,(y+self.ALTO)-5),
-            'SW': DragBox('SW',x-5,(y+self.ALTO)-5),
-            'W' : DragBox('W',x-5,(y+self.ALTO)/2)
-            }
-        for item in self.dragbox.keys():
-            self.add_child(self.dragbox[item])
-            
 
         #signals del foco
         self.connect("focus_in_event", self.on_focus_in)
@@ -405,7 +258,105 @@ class EntityComponent(goocanvas.Group):
         """Retorna el cuerpo del objeto
 
         """
-        return self._cuerpo
+        return self._body
+
+class AttributeComponent(goocanvas.Text):
+    """Componente gráfico que se pone dentro de una entidad"""
+    def __init__(self, name):
+        self.default_value = None # 
+        self.mandatory = False # 
+        self.primary_key = False # 
+        self.data_type = None # 
+        text = name + "\t"
+        if self.mandatory:
+            text = text + "True"
+        else:
+            text = text + "False"
+        goocanvas.Text.__init__(self, text=text, 
+				anchor=gtk.ANCHOR_SE,
+				can_focus = False)
+
+    def refresh(self):
+        pass
+
+    def set_primary_key (self, valor) :
+        pass
+
+    def get_primary_key (self) :
+        pass
+
+    def set_default_value (self, value) :
+        pass
+
+    def get_default_value (self) :
+        pass
+    def set_data_type (self, datatype) :
+        pass
+
+    def get_data_type (self) :
+        pass
+    
+    def set_mandatory (self, mandatory) :
+        pass
+    
+    def get_mandatory (self) :
+        pass
+
+class RelationshipComponent(LineBaseComponent):
+    def __init__(self, entity1, entity2):
+        pass
+
+    def set_cardinality(self, type_):
+        pass
+
+    def get_cardinality(self):
+        pass
+
+    def set_entity1(self, entity):
+        pass
+
+    def get_entity1(self):
+        pass
+
+    def set_entity2(self, entity):
+        pass
+
+    def get_entity2(self):
+        pass
+
+    def on_entity_movement(self, item):
+        pass
+    
+class InheritanceComponent(LineBaseComponent):
+    def __init__(self, father, son):
+        self._father = father
+        self._son = son
+
+    def set_father(self, father):
+        pass
+
+    def get_father(self):
+        pass
+
+    def set_son(self, son):
+        pass
+
+    def get_son(self):
+        pass
+
+    def on_entity_movement(self, item):
+        pass
+
+class TableComponent(RectBaseComponent):
+    def __init__(self):
+        RectBaseComponent.__init__(self)
+
+
+class ReferenceComponent(LineBaseComponent):
+    def __init__(self):
+        LineBaseComponent.__init__(self)
+
+
 
 class Canvas:
     """Esta clase configura el canvas que provee goocanvas
@@ -429,3 +380,28 @@ class Canvas:
     
     def add_child(self, child):
         self._mycanvas.get_root_item().add_child(child)
+
+
+class RectangleComponent(RectBaseComponent):
+    def __init__(self):
+        RectBaseComponent.__init__(self)
+        self._transparency = 0.0
+
+    def set_transparency(self, opacity):
+        pass
+
+class LabelComponent(RectBaseComponent):
+    def __init__(self, x, y, text):
+        RectBaseComponent.__init__(self)
+        self.set_x(x)
+        self.set_y(y)
+        self._text = text
+
+    def set_text(self, text):
+        pass
+
+    def get_text(self):
+        pass
+
+
+

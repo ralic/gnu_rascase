@@ -35,7 +35,7 @@ def start():
     """
     Esta función es solo para inicializar la aplicación
     """
-    # this function code was taken from exaile <http://www.exaile.org>
+    # this code was taken from exaile <http://www.exaile.org>
     if sys.platform == 'linux2':
         # Set process name.  Only works on Linux >= 2.1.57.
         try:
@@ -49,11 +49,98 @@ def start():
 
 class ControlMainWindow:
     def __init__(self):
+        self._project = None
+        
         from pkg_resources import resource_string
         resource_string('rascase.resources.glade', 'wndmain.glade')
         self.viewmain = main.ViewMainWindow(self)
         gtk.main()
-            
-    def new_model(self):
+
+    def main(self):
         pass
 
+    def create_new_project(self):
+        pass
+
+    def create_new_logical_model(self):
+        pass
+
+    def generate_physical_model(self, logicalmodel):
+        pass
+
+    def open_project(self, path):
+        pass
+
+    def open_logical_model(self, path):
+        pass
+
+    def open_physical_model(self, path):
+        pass
+
+    def close_project(self):
+        pass
+
+    def close_model(self, model):
+        pass
+
+    def add_entity(self, model, x, y):
+        pass
+
+    def add_relationship(self, model, entity1, entity2):
+        pass
+
+    def add_inheritance(self, model, father, son):
+        pass
+
+    def add_label(self, model, x, y, width, height):
+        pass
+
+    def add_rectangle(self, model, x, y, width, height):
+        pass
+
+    def edit_entity(self, entity):
+        pass
+
+    def edit_relationship(self, relationship):
+        pass
+
+    def edit_inheritance(self, inheritance):
+        pass
+
+    def edit_label(self, label):
+        pass
+
+    def edit_rectangle(self, rectangle):
+        pass
+
+    def delete_entity(self, entity):
+        pass
+
+    def delete_relationship(self, relationship):
+        pass
+
+    def delete_inheritance(self, inheritance):
+        pass
+
+    def delete_label(self, label):
+        pass
+
+    def delete_rectangle(self, rectangle):
+        pass
+
+    def edit_table(self, table):
+        pass
+
+    def edit_reference(self, reference):
+        pass
+
+    def print_model(self, model):
+        pass
+
+    def export_model(self, model):
+        pass
+
+    
+    
+    def new_model(self):
+        pass
