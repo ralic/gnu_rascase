@@ -46,12 +46,17 @@ class LineBaseComponent:
 
 class RectBaseComponent(goocanvas.Group):
 
+    #define a custom signal
+    __gsignals__ = {
+        'on-movement': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+        }
+    
     _ANCHO = 100
     _ALTO = 200
     _ANCHO_LINEA = 1.0
     _COLOR_RELLENO = rascase.views.base.TANGO_COLOR_SKYBLUE_LIGHT
 
-    def __init__(self, x, y, bodytype='rect'):
+    def __init__(self, x, y, fill_color, stroke_color, bodytype='rect'):
         goocanvas.Group.__init__(self,can_focus = True)
         
         if (bodytype == 'table'):
@@ -63,8 +68,8 @@ class RectBaseComponent(goocanvas.Group):
             self._body = goocanvas.Rect(width=EntityComponent._ANCHO,
                                         height=EntityComponent._ALTO,
                                         line_width=EntityComponent._ANCHO_LINEA,
-                                        fill_color_rgba=EntityComponent._COLOR_RELLENO,
-                                        stroke_color="black")
+                                        fill_color_rgb=fill_color,
+                                        stroke_color=stroke_color)
         else:
             raise RuntimeError
             
@@ -86,81 +91,6 @@ class RectBaseComponent(goocanvas.Group):
 
         for item in self.dragbox.keys():
             self.add_child(self.dragbox[item])
-        
-
-    def set_x(self, x):
-        pass
-
-    def get_x(self):
-        pass
-
-    def set_y(self, y):
-        pass
-
-    def get_y(self):
-        pass
-    
-    def set_width(self, width):
-        pass
-
-    def get_width(self):
-        pass
-
-    def set_height(self, height):
-        pass
-
-    def get_height(self):
-        pass
-
-    def set_linecolor(self, color):
-        pass
-
-    def get_linecolor(self):
-        pass
-
-    def set_linewidth(self, width):
-        pass
-
-    def get_linewidth(self):
-        pass
-
-    def set_fillcolor(self, color):
-        pass
-
-    def get_fillcolor(self, color):
-        pass
-
-    def on_focus_in(self, item, target, event):
-        pass
-
-    def on_focus_out(self, item, target, event):
-        pass
-
-    def on_button_press(self, item, target, event):
-        pass
-
-    def on_button_release(self, item, target, event):
-        pass
-
-    def on_enter_notify(self, item, target, event):
-        pass
-
-    def on_leave_notifiy(self, item, target, event):
-        pass
-
-    def on_motion(self, item, target, event):
-        pass
-
-
-class EntityComponent(RectBaseComponent):
-    __gsignals__ = {
-        'on-movement': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
-        }
-    
-    def __init__(self,x,y):
-        #goocanvas.Group.__init__(self, can_focus = True)
-        RectBaseComponent.__init__(self, x, y)
-
 
         #signals del foco
         self.connect("focus_in_event", self.on_focus_in)
@@ -171,23 +101,8 @@ class EntityComponent(RectBaseComponent):
         self.connect("motion_notify_event",self.on_motion)
         self.connect("enter_notify_event",self.on_enter_notify)
         self.connect("leave_notify_event",self.on_leave_notify)
+                
         
-        
-
-    def add_attribute(self,attribute):
-        """Agrega un nuevo atributo a la entidad"""
-
-        self._cuerpo.add_child(attribute)
-        self._cuerpo.set_child_properties(attribute,
-                                          row=self._num_columns,
-                                          column=0,
-					  x_align=0.0)
-        print "numero de columnas", self._num_columns
-        self._num_columns += 1
-        self.request_update()
-
-    #reescritura de metodos
-    
     #senales
     def on_double_click_press(self,item,target,event):
         if event.type == gtk.gdk._2BUTTON_PRESS:
@@ -251,14 +166,77 @@ class EntityComponent(RectBaseComponent):
         new_y = event.y
         item.translate (new_x - self.drag_x, new_y - self.drag_y)
         self.emit('on-movement')
-        
+    
 
+    def set_x(self, x):
+        pass
+
+    def get_x(self):
+        pass
+
+    def set_y(self, y):
+        pass
+
+    def get_y(self):
+        pass
+    
+    def set_width(self, width):
+        pass
+
+    def get_width(self):
+        pass
+
+    def set_height(self, height):
+        pass
+
+    def get_height(self):
+        pass
+
+    def set_linecolor(self, color):
+        pass
+
+    def get_linecolor(self):
+        pass
+
+    def set_linewidth(self, width):
+        pass
+
+    def get_linewidth(self):
+        pass
+
+    def set_fillcolor(self, color):
+        pass
+
+    def get_fillcolor(self, color):
+        pass
+
+
+class EntityComponent(RectBaseComponent):
+
+    def __init__(self, x, y, stroke_color, fill_color):
+        #goocanvas.Group.__init__(self, can_focus = True)
+        RectBaseComponent.__init__(self, x, y, stroke_color, fill_color)
+        
+    def add_attribute(self,attribute):
+        """Agrega un nuevo atributo a la entidad"""
+
+        self._cuerpo.add_child(attribute)
+        self._cuerpo.set_child_properties(attribute,
+                                          row=self._num_columns,
+                                          column=0,
+					  x_align=0.0)
+        print "numero de columnas", self._num_columns
+        self._num_columns += 1
+        self.request_update()
+
+       
     #get-set de propiedad
     def get_body(self):
         """Retorna el cuerpo del objeto
 
         """
         return self._body
+   
 
 class AttributeComponent(goocanvas.Text):
     """Componente gráfico que se pone dentro de una entidad"""

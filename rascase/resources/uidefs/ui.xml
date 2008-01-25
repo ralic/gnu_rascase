@@ -1,0 +1,50 @@
+<ui>
+  <menubar name="menubar">
+    <menu action="File">
+      <menuitem action="NewLogicalModel"/>
+      <menuitem action="OpenModel"/>
+      <separator/>
+      <menuitem action="Save"/>
+      <menuitem action="SaveAs"/>
+      <separator/>
+      <menuitem action="Print"/>
+      <separator/>
+      <menuitem action="CloseModel"/>
+      <menuitem action="Quit"/>
+    </menu>
+    <menu action="Project">
+      <menuitem action="OpenProject"/>
+      <separator/>
+      <menuitem action="AddModel"/>
+      <menuitem action="RemoveModel"/>
+      <separator/>
+      <menuitem action="DeleteModel"/>
+    </menu>
+    <menu action="Edit">
+      <menuitem action="EditElement"/>
+      <menuitem action="DeleteElement"/>
+      <separator/>
+      <menuitem action="EditPreferences"/>
+    </menu>
+    <menu action="Help">
+      <menuitem action="ShowHelp"/>
+      <menuitem action="About"/>
+    </menu>
+  </menubar>
+  <toolbar name="toolbar">
+    <toolitem action="NewLogicalModel"/>
+    <toolitem action="OpenModel"/>
+    <toolitem action="Save"/>
+    <separator/>
+    <toolitem action="Print"/>
+    <separator/>
+    <toolitem action="Entity"/>
+    <toolitem action="Relationship"/>
+    <toolitem action="Inheritance"/>
+    <toolitem action="Label"/>
+    <toolitem action="Rectangle"/>
+    <separator/>
+    <toolitem action="ZoomIn"/>
+    <toolitem action="ZoomOut"/>
+  </toolbar>
+</ui>

@@ -29,7 +29,7 @@ import gtk
 import gtk.glade
 import goocanvas
 
-
+from pkg_resources import resource_filename
 
 from rascase.views import components
 
@@ -40,8 +40,8 @@ class ViewMainWindow:
 
     """
     def __init__(self,control, file_=None):
-        self.control = control #control que es dueño de la vista        
-        self.gladefile = "/home/freyes/Projects/rascase.git/rascase/resources/glade/wndmain.glade"
+        self.control = control #control que es dueño de la vista
+        self.gladefile = resource_filename("rascase.resources.glade", "wndmain.glade")
         self.wTree = gtk.glade.XML(self.gladefile)
 
         ## widgets
@@ -58,78 +58,75 @@ class ViewMainWindow:
         signals_dic = {"on_wndmain_delete_event":gtk.main_quit}
         self.wTree.signal_autoconnect(signals_dic)
 
-        # hace las paginas del GtkNotebook
-        self.ntbk_main = self.wTree.get_widget("ntbk_main")
-        self.canvas = [None]
-        self.canvas[0] = components.Canvas()
-
-
-        item = components.EntityComponent(20, 20)
-        self.canvas[0].add_child(item)
-        print 'item added'
-        container = gtk.HBox()
-        widget = gtk.Label("ejemplo.rxl")
-        container.pack_start(widget)
-
-        widget = gtk.Button()
-        imagen = gtk.Image()
-        imagen.set_from_stock(gtk.STOCK_CLOSE,gtk.ICON_SIZE_BUTTON)
-        widget.add(imagen)
-        container.pack_start(widget)
-        
-        container.show_all()
-
-        self.ntbk_main.append_page(self.canvas[0].scrolled_win,container)
-        
-        self.canvas.append(components.Canvas())
-        container = gtk.HBox()
-        widget = gtk.Label("ejemplo2.rxl")
-        container.pack_start(widget)
-
-        widget = gtk.Button()
-        imagen = gtk.Image()
-        imagen.set_from_stock(gtk.STOCK_CLOSE,gtk.ICON_SIZE_BUTTON)
-        widget.add(imagen)
-        container.pack_start(widget)
-        
-        container.show_all()
-        print self.canvas[1]
-        self.ntbk_main.append_page(self.canvas[1].scrolled_win,container)
-
-        
         # se ponen los archivos en el files_list
-
-        files_list = self.wTree.get_widget("files_list")
-        files_list_model = gtk.ListStore(gobject.TYPE_STRING)
-        
-        files_list_model.append(["ejemplo.rxl"])
-        files_list_model.append(["ejemplo2.rxl"])
-        files_list_model.append(["webshop.rxl"])
-        files_list_model.append(["libreria.rxl"])
-        
-
-        files_list.set_model(files_list_model)
-
-        tvcol = gtk.TreeViewColumn("Modelo")
-        files_list.append_column(tvcol)
-        cell = gtk.CellRendererText()
-        tvcol.pack_start(cell)
-        tvcol.add_attribute(cell, 'text', 0)
+        ## files_list = self.wTree.get_widget("files_list")
+        ## files_list_model = gtk.ListStore(gobject.TYPE_STRING)
+        ## files_list_model.append(["ejemplo.rxl"])
+        ## files_list_model.append(["ejemplo2.rxl"])
+        ## files_list_model.append(["webshop.rxl"])
+        ## files_list_model.append(["libreria.rxl"])
+        ## files_list.set_model(files_list_model)
+        ## tvcol = gtk.TreeViewColumn("Modelo")
+        ## files_list.append_column(tvcol)
+        ## cell = gtk.CellRendererText()
+        ## tvcol.pack_start(cell)
+        ## tvcol.add_attribute(cell, 'text', 0)
         
 
         # the properties of the window were defined
-        self.win = self.wTree.get_widget("wndmain")
-        self.win.set_default_size(600,500)
-        self.win.set_title("RasCASE")
-        if self.win is None:
+        self._win = self.wTree.get_widget("wndmain")
+        self._win.set_default_size(600,500)
+        self._win.set_title("RasCASE")
+        if self._win is None:
             print "self.win es none"
 
-        self.win.show_all()
+        self._construct_toolbar()
+        
+        self._win.show_all()
 
+    def _construct_toolbar(self):
+        uifile = resource_filename('rascase.resources.uidefs', 'ui.xml')
+
+        self._uimanager = gtk.UIManager()
+        accel_group = self._uimanager.get_accel_group()
+        self._win.add_accel_group(accel_group)
+
+        action_group = gtk.ActionGroup('my_actions')
+        action_group.add_actions([#TODO:finish actions
+            ('File', None, '_Archivo', None, None, None),
+            ('NewLogicalModel', gtk.STOCK_NEW, 'Nuevo modelo lógico', '<Control>n', None,
+             self.on_new_model),
+            ('OpenModel', gtk.STOCK_OPEN, None, '<Control>o', None,
+             self.on_open_model),
+            ('Save', gtk.STOCK_SAVE, None, '<Control>s', None,
+             self.on_save_model),
+            ('SaveAs', gtk.STOCK_SAVE_AS, None, None, None,
+             self.on_save_model),
+            ('Print', gtk.STOCK_PRINT, None, '<Control>p', None,
+             self.on_btn_print_clicked),
+            ('CloseModel', gtk.STOCK_CLOSE, 'Cerrar Modelo', '<Control>w', None,
+             self.on_close_file_clicked),
+            ('Quit', gtk.STOCK_QUIT, None, '<Control>q', None,
+             self.on_quit_selected)])
+        
+        self._uimanager.insert_action_group(action_group, 0)
+        self._uimanager.add_ui_from_file(uifile)
+
+        box = self.wTree.get_widget("vbox_main")
+        #pack the menubar
+        menubar = self._uimanager.get_widget("/menubar")
+        box.pack_start(menubar, False)
+        box.reorder_child(menubar, 0)
+        #pack the toolbar
+        toolbar = self._uimanager.get_widget("/toolbar")
+        box.pack_start(toolbar, False)
+        box.reorder_child(toolbar, 1)
 
     # signals
 
-    #TODO: construct the toolbars with the gtkmanager and not with glade-3
+    def on_quit_selected(self, menuitem):
+        pass
+    
     def on_new_project(self, menuitem):
         pass
 
@@ -140,6 +137,9 @@ class ViewMainWindow:
         pass
 
     def on_open_model(self, menuitem):
+        pass
+
+    def on_save_model(self, menuitem):
         pass
 
     def on_add_model_to_project(self, menuitem):
