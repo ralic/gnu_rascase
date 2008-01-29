@@ -24,6 +24,7 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 
+import logging
 import gobject
 import gtk
 import gtk.glade
@@ -40,6 +41,7 @@ class ViewMainWindow:
 
     """
     def __init__(self,control, file_=None):
+        logging.getLogger('views.main').info('ViewMainWindow.__init__: file_=%s', file_)
         self.control = control #control que es dueño de la vista
         self.gladefile = resource_filename("rascase.resources.glade", "wndmain.glade")
         self.wTree = gtk.glade.XML(self.gladefile)
@@ -54,7 +56,7 @@ class ViewMainWindow:
         self._files_list = None
         self._canvas_list = None
         self._selected_item = None
-        
+
         signals_dic = {"on_wndmain_delete_event":gtk.main_quit}
         self.wTree.signal_autoconnect(signals_dic)
 
@@ -71,7 +73,7 @@ class ViewMainWindow:
         ## cell = gtk.CellRendererText()
         ## tvcol.pack_start(cell)
         ## tvcol.add_attribute(cell, 'text', 0)
-        
+
 
         # the properties of the window were defined
         self._win = self.wTree.get_widget("wndmain")
@@ -81,7 +83,7 @@ class ViewMainWindow:
             print "self.win es none"
 
         self._construct_toolbar()
-        
+
         self._win.show_all()
 
     def _construct_toolbar(self):
@@ -107,8 +109,47 @@ class ViewMainWindow:
             ('CloseModel', gtk.STOCK_CLOSE, 'Cerrar Modelo', '<Control>w', None,
              self.on_close_file_clicked),
             ('Quit', gtk.STOCK_QUIT, None, '<Control>q', None,
-             self.on_quit_selected)])
-        
+             self.on_quit_selected),
+            ('Project', None, '_Proyecto', None, None, None),
+            ('OpenProject', gtk.STOCK_OPEN, None, '', 'Abrir proyecto',
+             self.on_open_project),
+            ('AddModel', gtk.STOCK_ADD, None, None, 'Añadir un modelo',
+             self.on_add_model_to_project),
+            ('RemoveModel', gtk.STOCK_REMOVE, None, None, 'Remover modelo del proyecto',
+             self.on_remove_model),
+            ('DeleteModel', gtk.STOCK_DELETE, None, None, 'Remover modelo del proyecto y eliminar el modelo',
+             self.on_delete_model),
+            ('Edit', None, '_Editar', None, None, None),
+            ('EditElement', gtk.STOCK_EDIT, None, None, 'Editar el elemento seleccionado',
+             self.on_edit_component_clicked),
+            ('DeleteElement', gtk.STOCK_DELETE, None, None, 'Borrar el elemento seleccionado',
+             self.on_delete_component_clicked),
+            ('EditPreferences', gtk.STOCK_PREFERENCES, None, None, 'Editar las preferencias',
+             self.on_edit_preferences_clicked),
+            ('Help', None, 'A_yuda', None, None, None),
+            ('ShowHelp', gtk.STOCK_HELP, None, 'F1', None,
+             self.on_show_help_clicked),
+            ('About', gtk.STOCK_ABOUT, None, None, None,
+             self.on_about_clicked),
+            ('Entity', gtk.STOCK_MISSING_IMAGE, 'Entidad', None, None,
+             self.on_add_entity_clicked),
+            ('Relationship', gtk.STOCK_MISSING_IMAGE, 'Relación', None, None,
+             self.on_add_relationship_clicked),
+            ('Inheritance', gtk.STOCK_MISSING_IMAGE, 'Herencia', None, None,
+             self.on_add_inheritance_clicked),
+            ('Label', gtk.STOCK_MISSING_IMAGE, 'Etiqueta', None, None,
+             self.on_add_label_clicked),
+            ('Rectangle', gtk.STOCK_MISSING_IMAGE, 'Rectangulo', None, None,
+             self.on_add_relationship_clicked),
+            ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, None,
+             self.on_zoomin_clicked),
+            ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, None,
+             self.on_zoomout_clicked),
+            ('SendToBack', gtk.STOCK_GO_DOWN, 'Enviar atras', None, None,
+             self.on_btn_send_to_back_clicked),
+            ('SendToFront', gtk.STOCK_GO_UP, 'Enviar al frente', None, None,
+             self.on_btn_send_to_front_clicked)])
+
         self._uimanager.insert_action_group(action_group, 0)
         self._uimanager.add_ui_from_file(uifile)
 
@@ -126,7 +167,7 @@ class ViewMainWindow:
 
     def on_quit_selected(self, menuitem):
         pass
-    
+
     def on_new_project(self, menuitem):
         pass
 
@@ -146,6 +187,9 @@ class ViewMainWindow:
         pass
 
     def on_remove_model(self, menuitem): #remove the model from the project
+        pass
+
+    def on_delete_model(self, menuitem):
         pass
 
     #on the close button of the gtk.Notebook page is clicked
@@ -175,6 +219,13 @@ class ViewMainWindow:
     def on_delete_component(self, item, target_item, event):
         pass
 
+    #callbacks usados por el uimanager
+    def on_delete_component_clicked(self, menuitem):
+        pass
+
+    def on_edit_component_clicked(self, menuitem):
+        pass
+
     def on_generate_physical_model_clicked(self, menuitem):
         pass
 
@@ -184,15 +235,24 @@ class ViewMainWindow:
     def on_btn_export_clicked(self, menuitem):
         pass
 
-    def on_btn_zoomin_clicked(self, menuitem):
+    def on_zoomin_clicked(self, menuitem):
         pass
-    
-    def on_btn_zoomout_clicked(self, menuitem):
+
+    def on_zoomout_clicked(self, menuitem):
         pass
 
     def on_btn_send_to_back_clicked(self, menuitem):
         pass
 
     def on_btn_send_to_front_clicked(self, menuitem):
+        pass
+
+    def on_edit_preferences_clicked(self, menuitem):
+        pass
+
+    def on_show_help_clicked(self, menuitem):
+        pass
+
+    def on_about_clicked(self, menuitem):
         pass
 

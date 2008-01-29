@@ -46,5 +46,8 @@
     <separator/>
     <toolitem action="ZoomIn"/>
     <toolitem action="ZoomOut"/>
+    <separator/>
+    <toolitem action="SendToFront"/>
+    <toolitem action="SendToBack"/>
   </toolbar>
 </ui>

@@ -25,7 +25,9 @@ import goocanvas
 import gobject
 import gtk
 
-import rascase.views.base
+from pkg_resources import resource_filename
+
+from rascase.views.base import *
 
 class LineBaseComponent:
     def __init__(self):
@@ -50,20 +52,20 @@ class RectBaseComponent(goocanvas.Group):
     __gsignals__ = {
         'on-movement': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
         }
-    
+
     _ANCHO = 100
     _ALTO = 200
     _ANCHO_LINEA = 1.0
-    _COLOR_RELLENO = rascase.views.base.TANGO_COLOR_SKYBLUE_LIGHT
+    _COLOR_RELLENO = TANGO_COLOR_SKYBLUE_LIGHT
 
     def __init__(self, x, y, fill_color, stroke_color, bodytype='rect'):
         goocanvas.Group.__init__(self,can_focus = True)
-        
+
         if (bodytype == 'table'):
             self._body = goocanvas.Table(width=EntityComponent._ANCHO,
                                          height=EntityComponent._ALTO,
                                          line_width=EntityComponent._ANCHO_LINEA)
-        
+
         elif (bodytype == 'rect'):
             self._body = goocanvas.Rect(width=EntityComponent._ANCHO,
                                         height=EntityComponent._ALTO,
@@ -72,12 +74,12 @@ class RectBaseComponent(goocanvas.Group):
                                         stroke_color=stroke_color)
         else:
             raise RuntimeError
-            
+
         self.translate(x, y)
         print EntityComponent._COLOR_RELLENO
         self.add_child(self._body)
         self._dragging= False
-        
+
         self.dragbox = {
             'NW': rascase.views.base.DragBox('NW',-5,-5),
             'N' : rascase.views.base.DragBox('N', self._ANCHO/2-2.5,-5),
@@ -101,18 +103,17 @@ class RectBaseComponent(goocanvas.Group):
         self.connect("motion_notify_event",self.on_motion)
         self.connect("enter_notify_event",self.on_enter_notify)
         self.connect("leave_notify_event",self.on_leave_notify)
-                
-        
+
+
     #senales
     def on_double_click_press(self,item,target,event):
         if event.type == gtk.gdk._2BUTTON_PRESS:
             print "*** se hizo doble click", type(target)
-            
-            
+
+
     def on_focus_in (self, item, target_item, event):
         for aux in self.dragbox.keys():
             self.dragbox[aux].props.visibility = goocanvas.ITEM_VISIBLE
-        
 
     def on_focus_out (self, item, target_item, event):
         for aux in self.dragbox.keys():
@@ -121,21 +122,21 @@ class RectBaseComponent(goocanvas.Group):
     def on_button_press(self,item,target,event):
         canvas = item.get_canvas()
         canvas.grab_focus(item)
-        
+
         for aux in self.dragbox.keys():
             if self.dragbox[aux].is_dragging():
                 return True
-            
+
         self._dragging = True
         fleur = gtk.gdk.Cursor(gtk.gdk.FLEUR)
         canvas = item.get_canvas ()
-        canvas.pointer_grab(item, 
+        canvas.pointer_grab(item,
                         gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.BUTTON_RELEASE_MASK,
                         fleur, event.time)
         self.drag_x = event.x
         self.drag_y = event.y
         return True
-    
+
     def on_button_release(self,item,target,event):
         for aux in self.dragbox.keys():
             if self.dragbox[aux].is_dragging():
@@ -145,28 +146,28 @@ class RectBaseComponent(goocanvas.Group):
         canvas = item.get_canvas ()
         canvas.pointer_ungrab(item, event.time)
         return True
-        
+
     def on_enter_notify(self,item,target,event):
         pass
-        
+
     def on_leave_notify(self,item,target,event):
         pass
-        
+
     def on_motion(self,item,target,event):
         for aux in self.dragbox.keys():
             if self.dragbox[aux].is_dragging():
                 return True
-         
+
         canvas = item.get_canvas ()
 
         if not (event.state == gtk.gdk.BUTTON1_MASK) and not self._dragging:
             return False
-        
+
         new_x = event.x
         new_y = event.y
         item.translate (new_x - self.drag_x, new_y - self.drag_y)
         self.emit('on-movement')
-    
+
 
     def set_x(self, x):
         pass
@@ -179,7 +180,7 @@ class RectBaseComponent(goocanvas.Group):
 
     def get_y(self):
         pass
-    
+
     def set_width(self, width):
         pass
 
@@ -216,7 +217,7 @@ class EntityComponent(RectBaseComponent):
     def __init__(self, x, y, stroke_color, fill_color):
         #goocanvas.Group.__init__(self, can_focus = True)
         RectBaseComponent.__init__(self, x, y, stroke_color, fill_color)
-        
+
     def add_attribute(self,attribute):
         """Agrega un nuevo atributo a la entidad"""
 
@@ -229,28 +230,34 @@ class EntityComponent(RectBaseComponent):
         self._num_columns += 1
         self.request_update()
 
-       
+    def get_icon_path(cls):
+
+        filename = resource_filename('rascase.resources.pixmaps', 'entity-icon.png')
+        return filename
+
+    get_icon_path = staticmethod(get_icon_path) #makes the method static
+
     #get-set de propiedad
     def get_body(self):
         """Retorna el cuerpo del objeto
 
         """
         return self._body
-   
+
 
 class AttributeComponent(goocanvas.Text):
     """Componente gráfico que se pone dentro de una entidad"""
     def __init__(self, name):
-        self.default_value = None # 
-        self.mandatory = False # 
-        self.primary_key = False # 
-        self.data_type = None # 
+        self.default_value = None #
+        self.mandatory = False #
+        self.primary_key = False #
+        self.data_type = None #
         text = name + "\t"
         if self.mandatory:
             text = text + "True"
         else:
             text = text + "False"
-        goocanvas.Text.__init__(self, text=text, 
+        goocanvas.Text.__init__(self, text=text,
 				anchor=gtk.ANCHOR_SE,
 				can_focus = False)
 
@@ -273,10 +280,10 @@ class AttributeComponent(goocanvas.Text):
 
     def get_data_type (self) :
         pass
-    
+
     def set_mandatory (self, mandatory) :
         pass
-    
+
     def get_mandatory (self) :
         pass
 
@@ -304,7 +311,7 @@ class RelationshipComponent(LineBaseComponent):
 
     def on_entity_movement(self, item):
         pass
-    
+
 class InheritanceComponent(LineBaseComponent):
     def __init__(self, father, son):
         self._father = father
@@ -344,7 +351,7 @@ class Canvas:
         self.scrolled_win = gtk.ScrolledWindow()
         self.scrolled_win.set_shadow_type(gtk.SHADOW_IN)
         self.scrolled_win.show()
-            
+
         self._mycanvas = goocanvas.Canvas()
         self._mycanvas.set_flags(gtk.CAN_FOCUS)
         self._mycanvas.set_size_request(300, 300)
@@ -352,10 +359,10 @@ class Canvas:
         root = self._mycanvas.get_root_item()
         self._mycanvas.set_root_item(root)
         self._mycanvas.show()
-    
+
         self.scrolled_win.add(self._mycanvas)
-    
-    
+
+
     def add_child(self, child):
         self._mycanvas.get_root_item().add_child(child)
 

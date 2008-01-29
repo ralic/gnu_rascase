@@ -25,7 +25,11 @@ Este modulo contiene las clases relacionadas con la implementación de las funci
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 
+import logging
+
 from rascase.core.base import *
+
+log = logging.getLogger("core.physical")
 
 class PhysicalBase:
     def __init__(self):
@@ -54,8 +58,9 @@ class PhysicalBase:
     
 
 
-class PhysicalModel(base.ModelBase):
-    def __init__(self, logicalmodel, path=None):
+class PhysicalModel(ModelBase):
+    def __init__(self, logicalmodel=None, path=None):
+        log.debug("PhysicalModel.__init__(logicalmodel=%s, path=%s)", logicalmodel, path)
         self._script_plugin = None
         self._dict_plugin = None
         self._tables_list = None

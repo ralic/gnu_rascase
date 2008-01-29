@@ -23,13 +23,14 @@
 
 # importa los modulos del sistema
 import sys
+import logging
 import gtk
 import gtk.glade
 from pkg_resources import resource_string
 
 # importa los modulos locales
-from rascase.views import main
-
+from rascase.views.main import *
+from rascase.core.base import *
 
 def start():
     """
@@ -45,22 +46,57 @@ def start():
         except:
             pass
     # end exaile code
+
+    #setup the logging system
+
+    # code adapted from
+    # http://docs.python.org/lib/multiple-destinations.html example
+    # set up logging to file - see previous section for more details
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                        datefmt='%m-%d %H:%M',
+                        filename='myapp.log',
+                        filemode='w')
+    # define a Handler which writes INFO messages or higher to the sys.stderr
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    # set a format which is simpler for console use
+    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    # tell the handler to use this format
+    console.setFormatter(formatter)
+    # add the handler to the root logger
+    logging.getLogger('').addHandler(console)
+
+    # Now, define a couple of other loggers which might represent areas in your
+    # application:
+
+    log = logging.getLogger('controllers.main')
+    log.info('Starting the application')
+    
     ControlMainWindow()
 
 class ControlMainWindow:
     def __init__(self):
         self._project = None
         
-        from pkg_resources import resource_string
-        resource_string('rascase.resources.glade', 'wndmain.glade')
-        self.viewmain = main.ViewMainWindow(self)
+        self.view = ViewMainWindow(control=self)
         gtk.main()
 
     def main(self):
         pass
 
     def create_new_project(self):
-        pass
+        """Se encarga de crear un nuevo proyecto y retorna una lista con
+        los path de los modelos que estan asociados al proyecto
+
+        """
+        self._project = Project()
+        lista = list()
+        modelos = self._project.get_models()
+        for x in range(len(modelos)):
+            lista.append(modelos.pop(x).get_path())
+
+        return lista
 
     def create_new_logical_model(self):
         pass
@@ -143,4 +179,11 @@ class ControlMainWindow:
     
     
     def new_model(self):
+        pass
+
+class ControlSaveFileDialog:
+    def __init__(self, action, project=None, model=None, title=None, parent=None, filter=None):
+        pass
+
+    def save(self, filename):
         pass

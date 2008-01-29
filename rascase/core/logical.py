@@ -25,13 +25,24 @@ Este modulo contiene las clases relacionadas con la implementación de las funci
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 
+import logging
+
+#from rascase.core.base import *
 from rascase.core.base import *
 
-class LogicalModel(base.ModelBase):
-    def __init__(self):
-        self._entities_list = None
-        self._relationships_list = None
-        self._inheritance_list = None
+#set the logging
+log = logging.getLogger('core.logical')
+
+class LogicalModel(ModelBase):
+    def __init__(self, path=None):
+        log.debug("LogicalModel.__init__(path=%s)", path)
+        ModelBase.__init__(self, path)
+        self._entities_list = list()
+        self._relationships_list = list()
+        self._inheritance_list = list()
+
+        if (self._path == None):
+            pass
 
     def generate_physical_model(self, path=None):
         return False
@@ -50,7 +61,7 @@ class LogicalModel(base.ModelBase):
 
     
 class Entity(LogicalBase, RectBase):
-    def __init__(self, x, y):
+    def __init__(self, x=0, y=0, xmlnode=None):
         self._attributes_list = None
 
     def add_attribute(self, attribute):
