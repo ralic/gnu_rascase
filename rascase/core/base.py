@@ -33,8 +33,8 @@ import os
 
 #por alguna razón al importar se va de hocico,
 #se produce algo como import circular
-#from rascase.core.logical import *
-#from rascase.core.physical import *
+from rascase.core import logical
+from rascase.core import physical
 
 log = logging.getLogger("core.base")
 
@@ -79,6 +79,89 @@ class ModelBase:
             return True
         else:
             return False
+
+class LogicalBase:
+    def __init__(self):
+        self._name = None
+        self._codename = None
+        self._description = None
+
+    def get_name(self):
+        return self._name
+
+    def set_name(self, value):
+        self._name = value
+
+    def get_codename(self):
+        return self._codename
+
+    def set_codename(self, value):
+        self._codename = value
+
+    def get_description(self):
+        return self._description
+
+    def set_description(self, value):
+        self._description = value
+
+    def to_xml(self, doc, uri):
+        raise NotImplemented
+
+    def check(self):
+        raise NotImplemented
+
+class RectBase:
+    def __init__(self):
+        self._linecolor = None
+        self._linewidth = None
+        self._fillcolor = None
+        self._width = None
+        self._height = None
+        self._pos_x = None
+        self._pos_y = None
+        self._dragbox = None
+
+    def set_linecolor(self, value):
+        self._linecolor = value
+
+    def get_linecolor(self):
+        return self._linecolor
+
+    def set_linewidth(self, value):
+        self._linewidth = value
+
+    def get_linewidth(self):
+        return self._linewidth
+
+    def set_fillcolor(self, value):
+        self._fillcolor = value
+
+    def get_fillcolor(self):
+        return self._fillcolor
+
+    def set_width(self, value):
+        self._width = value
+
+    def get_width(self):
+        return self._width
+
+    def set_height(self, value):
+        self._height = value
+
+    def get_height(self):
+        return self._height
+
+    def set_x(self, value):
+        self._pos_x = value
+
+    def get_x(self):
+        return self._pos_x
+
+    def set_y(self, value):
+        self._pos_y = value
+
+    def get_y(self):
+        return self._pos_y
 
 class ConfigurationManager:
     def __init__(self):
@@ -141,33 +224,44 @@ class Project:
         self._path = filepath
         self._models_list = list()
 
-        doc = xml.dom.minidom.parse(filepath)
+        doc = xml.dom.minidom.parse(self._path)
+        projectnode = doc.childNodes[0]
 
-        if doc.hasChildNodes() and doc.childNodes[0].hasChildNodes():
-            for i in range(len(doc.childNodes[0].childNodes)):
-                print doc.childNodes[0].childNodes[i]
-                ## modelname = doc.childNodes[0].childNodes[i].getAttributeNS(XML_URI, 'modelpath')
-                ## log.info("found the model %s inside project %s", modelname, filepath)
-                ## extension = modelname.rsplit('.', 2)[0]
-                ## log.debug("extension of %s is %s", modelname, extension)
+        for node in projectnode.childNodes:
+            if node.nodeType == node.TEXT_NODE:
+                continue
 
-                ## if (extension == "rxl"):
-                ##     self._models_list.append(LogicalModel(path=modelname))
-                ## elif (extension == "rfx"):
-                ##     self._models_list.append(PhysicalModel(path=modelname))
+            modelname = node.getAttributeNS(XML_URI, 'modelpath')
+
+            log.info("found the model %s inside project %s", modelname, self._path)
+
+            # we get the extension of the filename
+            extension = os.path.basename(modelname).split('.', 2)[1]
+            log.debug("extension of %s is %s", modelname, extension)
+
+            #rxl == rascase xml logical
+            #rxf == rascase xml fisico (physical in spanish)
+            if (extension == "rxl"):
+                self._models_list.append(logical.LogicalModel(path=modelname))
+            elif (extension == "rxf"):
+                self._models_list.append(PhysicalModel(path=modelname))
+            else:
+                print "problemas con la extension: ", extension
+                print os.path.basename(modelname), modelname
 
     ## #averiguar para que mierda puse la propiedad 'name'
     ## def set_name(self, name):
     ##     pass
 
-    ## def get_name(self):
-    ##     pass
+    def get_name(self):
+        "Retorna el nombre del archivo, puede ser usado para ponerlo en el titulo de la ventana"
+        return os.path.basename(self._path)
 
     def add_model(self, model):
         if not(type(model) is ModelBase):
             log.error("The argument passed to %s.add_model is not a ModelBase instance (%s)", self, model)
             raise RuntimeError
-        elif (model in self._models_list):
+        elif (model in self._models_list): #this only checks the references, _not_ the path
             log.debug("Trying to add to the project an already existing model")
             return False
 
@@ -205,13 +299,17 @@ class Project:
         prj = doc.createElementNS(URI_XML, "ras:project")
         doc.appendChild(prj)
 
-        for i in len(self._models_list):
+        for i in range(len(self._models_list)):
             model = doc.createElementNS(XML_URI, "ras:model")
             model.setAttributeNS(XML_URI, "ras:modelpath", self._models_list[i].get_path())
-            doc.appendChild(model)
+            prj.appendChild(model)
 
         if path!=None:
             self._path = path
 
         file_out = open(self._path, "w")
         xml.dom.ext.PrettyPrint(doc, file_out)
+
+class Print:
+    """Esta clase se encarga de imprimir"""
+    pass
