@@ -31,8 +31,7 @@ setup(name="RasCase",
       url="http://rascase.linuxdiinf.org",
       packages=['rascase',
                 'rascase.views',
-                'rascase.controllers',
-                'rascase.core'],
+                'rascase.controllers'],
       package_data={
         'rascase':
             ['resources/glade/*',

@@ -42,7 +42,7 @@ XML_URI = "http://freyes.linuxdiinf.org/rascase"
 class ModelBase:
     """clase base para la implementación de las clases modelo"""
     def __init__(self, path):
-        self._name = None
+        self._name = None #para que sirve esto?
         self._path = path
 
     def save(self, path=None):
@@ -52,7 +52,7 @@ class ModelBase:
         return self._path
 
     def print_model(self):
-        return False
+        pass
 
     def export_to_png(self):
         return False
@@ -227,6 +227,7 @@ class Project:
         projectnode = doc.childNodes[0]
 
         for node in projectnode.childNodes:
+            #because we are looking for
             if node.nodeType == node.TEXT_NODE:
                 continue
 
@@ -241,12 +242,11 @@ class Project:
             #rxl == rascase xml logical
             #rxf == rascase xml fisico (physical in spanish)
             if (extension == "rxl"):
-                self._models_list.append(logical.LogicalModel(path=modelname))
+                self._models_list.append(LogicalModel(path=modelname))
             elif (extension == "rxf"):
                 self._models_list.append(PhysicalModel(path=modelname))
             else:
-                print "problemas con la extension: ", extension
-                print os.path.basename(modelname), modelname
+                log.debug("problems with the extension: %s of %s", extension, modelname)
 
     ## #averiguar para que mierda puse la propiedad 'name'
     ## def set_name(self, name):
@@ -312,10 +312,10 @@ class Project:
 class Print:
     """Esta clase se encarga de imprimir"""
     pass
-class LogicalModel(base.ModelBase):
+class LogicalModel(ModelBase):
     def __init__(self, path=None):
         log.debug("LogicalModel.__init__(path=%s)", path)
-        base.ModelBase.__init__(self, path)
+        ModelBase.__init__(self, path)
         self._entities_list = list()
         self._relationships_list = list()
         self._inheritance_list = list()
@@ -338,9 +338,21 @@ class LogicalModel(base.ModelBase):
         doc = xml.dom.minidom.parse(self._path)
         modelo = doc.childNodes[0]
 
-        for i in modelo.childNodes:
-            if i.nodeType == i.TEXT_NODE:
-                print "datos: '", i.data, "'"
+        for node in modelo.getElementsByTagNameNS(XML_URI, "entity"):
+            log.debug("constructing an entity")
+            entity = Entity(xmlnode=node)
+            self._entities_list.append(entity)
+
+        for node in modelo.getElementsByTagNameNS(XML_URI, "relationship"):
+            log.debug("construction a relationship")
+            relationship = Relationship(xmlnode=node)
+            self._relationships_list.append(relationship)
+
+        for node in modelo.getElementsByTagNameNS(XML_URI, "inheritance"):
+            log.debug("constructing a inheritance")
+            inheritance = Inheritance(xmlnode=node)
+            self._inheritance_list.append(inheritance)
+        
 
 
     def generate_physical_model(self, path=None):
@@ -402,24 +414,22 @@ class Entity(LogicalBase, RectBase):
         self._attributes_list = list()
 
         if (xmlnode != None):
-            self.set_name(xmlnode.getAttributeNS(XML_URI, "ras:name"))
-            self.set_codename(xmlnode.getAttributeNS(XML_URI, "ras:codename"))
-            self.set_description(xmlnode.getAttributeNS(XML_URI, "ras:description"))
+            self.set_name(xmlnode.getAttributeNS(XML_URI, "name"))
+            self.set_codename(xmlnode.getAttributeNS(XML_URI, "codename"))
+            self.set_description(xmlnode.getAttributeNS(XML_URI, "description"))
 
             #get the position of the entity
-            self.set_x(xmlnode.getAttributeNS(XML_URI, "ras:x"))
-            self.set_y(xmlnode.getAttributeNS(XML_URI, "ras:y"))
+            self.set_x(xmlnode.getAttributeNS(XML_URI, "x"))
+            self.set_y(xmlnode.getAttributeNS(XML_URI, "y"))
 
             #get the dimentions of the entity
-            self.set_height(xmlnode.getAttributeNS(XML_URI, "ras:height"))
-            self.set_width(xmlnode.getAttributeNS(XML_URI, "ras:width"))
+            self.set_height(xmlnode.getAttributeNS(XML_URI, "height"))
+            self.set_width(xmlnode.getAttributeNS(XML_URI, "width"))
 
             #get the visual properties of the entity
-            self.set_linecolor(xmlnode.getAttributeNS(XML_URI, "ras:linecolor"))
-            self.set_linewidth(xmlnode.getAttributeNS(XML_URI, "ras:linewidth"))
-            self.set_fillcolor(xmlnode.getAttributeNS(XML_URI, "ras:fillcolor"))
-
-            
+            self.set_linecolor(xmlnode.getAttributeNS(XML_URI, "linecolor"))
+            self.set_linewidth(xmlnode.getAttributeNS(XML_URI, "linewidth"))
+            self.set_fillcolor(xmlnode.getAttributeNS(XML_URI, "fillcolor"))
 
 
     def add_attribute(self, attribute):
@@ -430,21 +440,21 @@ class Entity(LogicalBase, RectBase):
 
     def to_xml(self, doc, uri):
         """Transforma la información que almacena el objeto en un nodo xml y lo retorna"""
-        entity = doc.createElementNS(uri, "ras:entity")
+        entity = doc.createElementNS(uri, "entity")
 
-        entity.setAttributeNS(uri, "ras:name", self.get_name())
-        entity.setAttributeNS(uri, "ras:codename", self.get_codename())
-        entity.setAttributeNS(uri, "ras:description", self.get_description())
+        entity.setAttributeNS(uri, "name", self.get_name())
+        entity.setAttributeNS(uri, "codename", self.get_codename())
+        entity.setAttributeNS(uri, "description", self.get_description())
 
-        entity.setAttributeNS(uri, "ras:x", self.get_x())
-        entity.setAttributeNS(uri, "ras:y", self.get_y())
+        entity.setAttributeNS(uri, "x", self.get_x())
+        entity.setAttributeNS(uri, "y", self.get_y())
 
-        entity.setAttributeNS(uri, "ras:height", self.get_height())
-        entity.setAttributeNS(uri, "ras:width", self.get_width())
+        entity.setAttributeNS(uri, "height", self.get_height())
+        entity.setAttributeNS(uri, "width", self.get_width())
 
-        entity.setAttributeNS(uri, "ras:linecolor", self.get_linecolor())
-        entity.setAttributeNS(uri, "ras:linewidth", self.get_linewidth())
-        entity.setAttributeNS(uri, "ras:fillcolor", self.get_fillcolor())
+        entity.setAttributeNS(uri, "linecolor", self.get_linecolor())
+        entity.setAttributeNS(uri, "linewidth", self.get_linewidth())
+        entity.setAttributeNS(uri, "fillcolor", self.get_fillcolor())
 
         for i in range(len(self._attributes_list)):
             log.debug("to xml %s.%s", self.get_codename(),
@@ -455,35 +465,56 @@ class Entity(LogicalBase, RectBase):
         return entity
 
 class Attribute(LogicalBase):
-    def __init__(self):
+    def __init__(self, xmlnode=None):
+        LogicalBase.__init__(self)
         self._primary_key = False
-        self._data_type = None
+        self._data_type = LogicalDataType.INTEGER
+        self._data_type_length = None
         self._default_value = None
         self._mandatory = False
 
+        if ((xmlnode != None) and (xmlnode.nodeType == xmlnode.ELEMENT_NODE)):
+            self.set_name(xmlnode.getAttributeNS(XML_URI, "name"))
+            self.set_codename(xmlnode.getAttributeNS(XML_URI, "codename"))
+            self.set_description(xmlnode.getAttributeNS(XML_URI, "description"))
+
+            self.set_primary_key(xmlnode.getAttributeNS(XML_URI, "pk"))
+            self.set_data_type(xmlnode.getAttributeNS(XML_URI, "datatype"))
+            self._data_type_length = xmlnode.getAttributeNS(XML_URI, "datatypelength")
+            self.set_default_value(xmlnode.getAttributeNS(XML_URI, "defaultvalue"))
+            self.set_mandatory(xmlnode.getAttributeNS(XML_URI, "mandatory"))
+
+
+
     def set_primary_key(self, value):
-        pass
+        self._primary_key = value
 
     def is_primary_key(self):
-        return False
+        return self._primary_key
 
     def set_default_value(self, value):
-        pass
+        self._default_value = value
 
     def get_default_value(self):
-        pass
+        return self._default_value
 
-    def set_data_type(self, value):
+    def set_data_type(self, datatype, length=None):
+        """Define el tipo de dato (datatype) del atributo
+
+        El parametro opcional length se utiliza para definir el largo del tipo de dato (se utiliza solamente para los datatype que soportan dicha opcion)
+
+        Por ejemplo:
+        VARCHAR(25) => set_datatype(datatype=LogicalDataType.VARCHAR, length=25) """
         pass
 
     def get_data_type(self):
-        pass
+        return self._data_type
 
     def set_mandatory(self, value):
-        pass
+        self._mandatory = value
 
     def is_mandatory(self):
-        pass
+        return self._mandatory
 
 
 class Relationship(LogicalBase):
@@ -492,17 +523,17 @@ class Relationship(LogicalBase):
     CARDINALITY_1_N = 1
     CARDINALITY_N_1 = 2
     CARDINALITY_N_N = 3
-    
-    def __init__(self, entity1, entity2):
-        self._cardinality = None
+
+    def __init__(self, entity1=None, entity2=None, xmlnode=None):
+        self._cardinality = Relationship.CARDINALITY_1_N
         self._entity1 = entity1
         self._entity2 = entity2
 
     def set_cardinality(self, value):
-        pass
+        self._cardinality = value
 
     def get_cardinality(self):
-        pass
+        return self._cardinality
 
     def set_entity1(self, entity):
         pass
@@ -517,9 +548,10 @@ class Relationship(LogicalBase):
         pass
 
 class Inheritance(LogicalBase):
-    def __init__(self, father, son):
+    def __init__(self, father=None, son=None, xmlnode=None):
         self._father = father
         self._son = son
+
 
 class LogicalDataType:
     CHARACTER = 0
