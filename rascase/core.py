@@ -123,7 +123,7 @@ class RectBase:
         self._height = None
         self._pos_x = None
         self._pos_y = None
-        self._dragbox = None
+        self._dragbox = None #creo que esto no es necesario, pk ni siquiera para que lo puse :P
 
     def set_linecolor(self, value):
         "Define el color de la linea del rectangulo"
@@ -764,7 +764,7 @@ class Inheritance(LogicalBase):
 
         self._father = entity
 
-    def get_father(self, entity):
+    def get_father(self):
         return self._father
 
     def set_son(self, entity):
@@ -776,7 +776,7 @@ class Inheritance(LogicalBase):
 
         self._son = entity
 
-    def get_son(self, entity):
+    def get_son(self):
         return self._son
 
     def set_linecolor(self, value):
@@ -803,18 +803,30 @@ class LogicalDataType:
     TIMESTAMP = 13
     INTERVAL = 14
 
-    def to_string(cls, type):
+    def to_string(cls, type_):
         pass
     to_string = classmethod(to_string) #transforma el metodo to_string en estatico
 
-    def get_description(cls, type):
+    def get_description(cls, type_):
         pass
 
     get_description = classmethod(get_description)
 
 class Label(RectBase):
-    def __init__(self, text):
-        self._text = ""
+    def __init__(self, text=None, xmlnode=None):
+        RectBase.__init__(self)
+        self._text = text
+
+        if xmlnode != None:
+            self._text = xmlnode.getAttributeNS(XML_URI, "text")
+            self.set_linecolor(xmlnode.getAttributeNS(XML_URI, "linecolor"))
+            self.set_linewidth(xmlnode.getAttributeNS(XML_URI, "linewidth"))
+            self.set_fillcolor(xmlnode.getAttributeNS(XML_URI, "fillcolor"))
+            self.set_width(xmlnode.getAttributeNS(XML_URI, "width"))
+            self.set_height(xmlnode.getAttributeNS(XML_URI, "height"))
+            self.set_x(xmlnode.getAttributeNS(XML_URI, "x"))
+            self.set_y(xmlnode.getAttributeNS(XML_URI, "y"))
+
 
     def set_text(self, text):
         pass
