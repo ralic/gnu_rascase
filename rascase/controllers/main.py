@@ -30,7 +30,7 @@ from pkg_resources import resource_string
 
 # importa los modulos locales
 from rascase.views.main import *
-from rascase.core.base import *
+from rascase.core import *
 
 def start():
     """
