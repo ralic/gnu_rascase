@@ -804,11 +804,72 @@ class LogicalDataType:
     INTERVAL = 14
 
     def to_string(cls, type_):
-        pass
+        if type_==LogicalDataType.CHARACTER:
+            return "CHARACTER"
+        elif type_==LogicalDataType.VARCHAR:
+            return "VARCHAR"
+        elif type_==LogicalDataType.BIT:
+            return "BIT"
+        elif type_==LogicalDataType.VARBIT:
+            return "VARBIT"
+        elif type_==LogicalDataType.NUMERIC:
+            return "NUMERIC"
+        elif type_==LogicalDataType.DECIMAL:
+            return "DECIMAL"
+        elif type_==LogicalDataType.INTEGER:
+            return "INTEGER"
+        elif type_==LogicalDataType.SMALLINT:
+            return "SMALLINT"
+        elif type_==LogicalDataType.FLOAT:
+            return "FLOAT"
+        elif type_==LogicalDataType.REAL:
+            return "REAL"
+        elif type_==LogicalDataType.DOUBLE:
+            return "DOUBLE"
+        elif type_==LogicalDataType.DATE:
+            return "DATE"
+        elif type_==LogicalDataType.TIME:
+            return "TIME"
+        elif type_==LogicalDataType.TIMESTAMP:
+            return "TIMESTAMP"
+        elif type_==LogicalDataType.INTERVAL:
+            return "INTERVAL"
+
     to_string = classmethod(to_string) #transforma el metodo to_string en estatico
 
     def get_description(cls, type_):
-        pass
+
+        #TODO: escribir las descripciones para cada tipo de dato
+        if type_==LogicalDataType.CHARACTER:
+            return "CHARACTER"
+        elif type_==LogicalDataType.VARCHAR:
+            return "VARCHAR"
+        elif type_==LogicalDataType.BIT:
+            return "BIT"
+        elif type_==LogicalDataType.VARBIT:
+            return "VARBIT"
+        elif type_==LogicalDataType.NUMERIC:
+            return "NUMERIC"
+        elif type_==LogicalDataType.DECIMAL:
+            return "DECIMAL"
+        elif type_==LogicalDataType.INTEGER:
+            return "INTEGER"
+        elif type_==LogicalDataType.SMALLINT:
+            return "SMALLINT"
+        elif type_==LogicalDataType.FLOAT:
+            return "FLOAT"
+        elif type_==LogicalDataType.REAL:
+            return "REAL"
+        elif type_==LogicalDataType.DOUBLE:
+            return "DOUBLE"
+        elif type_==LogicalDataType.DATE:
+            return "DATE"
+        elif type_==LogicalDataType.TIME:
+            return "TIME"
+        elif type_==LogicalDataType.TIMESTAMP:
+            return "TIMESTAMP"
+        elif type_==LogicalDataType.INTERVAL:
+            return "INTERVAL"
 
     get_description = classmethod(get_description)
 
