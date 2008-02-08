@@ -228,6 +228,12 @@ class ConfigurationManager:
     def get_inheritance_color(self):
         return self._client.get_string(self._base_dir + '/inheritance_color')
 
+    def set_linecolor(self, value):
+        self._client.set_string(self._base_dir + '/line_color', value)
+
+    def get_linecolor(self):
+        return self._client.get_string(self._base_dir + '/line_color')
+
     def set_last_project_opened(self, value):
         self._client.set_string(self._base_dir + '/last_project', value)
 
@@ -887,7 +893,21 @@ class Label(RectBase):
             self.set_height(xmlnode.getAttributeNS(XML_URI, "height"))
             self.set_x(xmlnode.getAttributeNS(XML_URI, "x"))
             self.set_y(xmlnode.getAttributeNS(XML_URI, "y"))
+        else:
+            config = ConfigurationManager()
 
+            self._text = "Rascase" #these should use gettext
+
+            self.set_linecolor(config.get_linecolor())
+            self.set_linewidth(2) #do we use a gconf key?
+            self.set_fillcolor(config.get_label_color())
+            self.set_width(40)
+            self.set_height(20)
+
+            # probably the these coordinates should be calcuted
+            # to get the top-left corner visible in the corner
+            self.set_x(0)
+            self.set_y(0)
 
     def set_text(self, text):
         pass
