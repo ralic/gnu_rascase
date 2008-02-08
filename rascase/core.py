@@ -41,7 +41,7 @@ log = logging.getLogger("core")
 XML_URI = "http://freyes.linuxdiinf.org/rascase"
 
 class ModelBase:
-    """clase base para la implementación de las clases modelo"""
+    "clase base para la implementación de las clases modelo"
     def __init__(self, path):
         self._name = None #para que sirve esto?
         self._path = path
@@ -791,6 +791,9 @@ class Inheritance(LogicalBase):
     def get_linecolor(self, value):
         self._linecolor = value
 
+    def to_xml(self, doc, uri):
+        pass
+
 
 class LogicalDataType:
     CHARACTER = 0
@@ -885,7 +888,9 @@ class Label(RectBase):
         self._text = text
 
         if xmlnode != None:
-            self._text = xmlnode.getAttributeNS(XML_URI, "text")
+            log.debug("Constructing a Label using a xml node")
+            self._text = xmlnode.getElementsByTagNameNS(uri, "text")[0].childNodes[0].nodeValue
+
             self.set_linecolor(xmlnode.getAttributeNS(XML_URI, "linecolor"))
             self.set_linewidth(xmlnode.getAttributeNS(XML_URI, "linewidth"))
             self.set_fillcolor(xmlnode.getAttributeNS(XML_URI, "fillcolor"))
@@ -894,8 +899,8 @@ class Label(RectBase):
             self.set_x(xmlnode.getAttributeNS(XML_URI, "x"))
             self.set_y(xmlnode.getAttributeNS(XML_URI, "y"))
         else:
+            log.debug("Constructing a Label using default values")
             config = ConfigurationManager()
-
             self._text = "Rascase" #these should use gettext
 
             self.set_linecolor(config.get_linecolor())
@@ -910,10 +915,42 @@ class Label(RectBase):
             self.set_y(0)
 
     def set_text(self, text):
-        pass
+        """Define el texto que debe ser desplegado en la Label
+
+        El formato para usar etiquetas es el de Pango Text Attribute Markup Language
+        http://library.gnome.org/devel/pango/stable/PangoMarkupFormat.html
+
+        """
+        self._text = str(text)
 
     def get_text(self):
-        pass
+        """Retorna el texto utilizado para desplegar en la Label
+
+        Si el usuario ha utilizado etiquetas para el estilo (por ejemplo <b>negrita</b>)
+        el string retornado tambien las incluira
+
+        """
+        return self._text
+
+    def to_xml(self, doc, uri):
+        "Transforma la informacion que almacena el objeto en un nodo xml y lo retorna"
+
+        label = doc.createElementNS(uri, "label")
+
+        #text
+        textelement = doc.createElementNS(uri, "text")
+        textelement.appendChild(doc.createTextNode(self.get_text()))
+        label.appendChild(textelement)
+
+        label.setAttributeNS(uri, "linecolor", self.get_linecolor())
+        label.setAttributeNS(uri, "fillcolor", self.get_fillcolor())
+        label.setAttributeNS(uri, "linewidth", self.get_fillcolor())
+        label.setAttributeNS(uri, "width", self.get_width())
+        label.setAttributeNS(uri, "height", self.get_height())
+        label.setAttributeNS(uri, "x", self.get_x())
+        label.setAttributeNS(uri, "y", self.get_y())
+
+        return label
 
 
 class Rectangle(RectBase):

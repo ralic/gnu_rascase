@@ -26,7 +26,7 @@ import sys
 import logging
 import gtk
 import gtk.glade
-from pkg_resources import resource_string
+from pkg_resources import resource_filename
 
 # importa los modulos locales
 from rascase.views.main import *
