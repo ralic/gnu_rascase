@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 ##
-## main.py
-## Login : <freyes@yoda.>
-## Started on  Fri Dec 14 23:03:32 2007 Felipe Reyes
+## controllers.py
+## Login : <freyes@yoda>
+## Started on  Tue Feb 12 11:59:58 2008 Felipe Reyes
 ## $Id$
 ## 
-## Copyright (C) 2007 Felipe Reyes
+## Copyright (C) 2008 Felipe Reyes
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation; either version 2 of the License, or
@@ -21,6 +21,63 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 
+class ControlEntityComponent:
+    def __initi__(self):
+        pass
+
+class ControlAttributeComponent:
+    def __init__(self):
+        pass
+
+class ControlRelationshipComponent:
+    def __init__(self):
+        pass
+
+class ControlInheritanceComponent:
+    def __init__(self):
+        pass
+
+class ControlTableComponent:
+    def __init__(self):
+        pass
+
+class ControlReferenceComponent:
+    def __init__(self):
+        pass
+
+class ControlRectangleComponent:
+    def __init__(self):
+        pass
+
+class ControlLabelComponent:
+    def __init__(self):
+        pass
+
+
+
+### logical.py
+class ControlEditEntity:
+    def __init__(self, entity):
+        self._entity = entity
+
+    def save(self):
+        pass
+
+class ControlEditLabel:
+    def __init__(self, label):
+        self._label = label
+
+    def save_text(self, text):
+        pass
+
+class ControlEditRectangle:
+    def __init__(self, rectangle):
+        pass
+
+    def save(self):
+        pass
+
+### main.py
 # importa los modulos del sistema
 import sys
 import logging
@@ -72,13 +129,13 @@ def start():
 
     log = logging.getLogger('controllers.main')
     log.info('Starting the application')
-    
+
     ControlMainWindow()
 
 class ControlMainWindow:
     def __init__(self):
         self._project = None
-        
+
         self.view = ViewMainWindow(control=self)
         gtk.main()
 
@@ -176,8 +233,6 @@ class ControlMainWindow:
     def export_model(self, model):
         pass
 
-    
-    
     def new_model(self):
         pass
 
