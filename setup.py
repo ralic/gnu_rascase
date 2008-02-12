@@ -23,15 +23,13 @@
 
 from setuptools import setup
 
-setup(name="RasCase",
+setup(name="Rascase",
       version='0.1',
       description="A simple tool to develop Entity-Relationship models",
       author="Felipe Reyes",
       author_email="felipereyes@gmail.com",
       url="http://rascase.linuxdiinf.org",
-      packages=['rascase',
-                'rascase.views',
-                'rascase.controllers'],
+      packages=['rascase'],
       package_data={
         'rascase':
             ['resources/glade/*',
@@ -39,6 +37,6 @@ setup(name="RasCase",
              'resources/uidefs/*']
         },
       entry_points = {'console_scripts':
-                      ['rascase = rascase.controllers.main:start',]
+                      ['rascase = rascase.controllers:start',]
                       }
       )
