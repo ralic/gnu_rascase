@@ -950,13 +950,47 @@ class Label(RectBase):
         label.setAttributeNS(uri, "x", self.get_x())
         label.setAttributeNS(uri, "y", self.get_y())
 
-        return label
+        return label #return the node to be added to a xml document
 
 
 class Rectangle(RectBase):
-    def __init__(self, x, y):
-        self.set_x = x
-        self.set_y = y
+    def __init__(self, x=0, y=0, xmlnode=None):
+        self.set_x(x)
+        self.set_y(y)
+
+        if xmlnode != None:
+            log.debug("Constructing a Rectangle using default values")
+            self.set_x(xmlnode.getAttributeNS(XML_URI, "x"))
+            self.set_y(xmlnode.getAttributeNS(XML_URI, "y"))
+
+            self.set_linecolor(xmlnode.getAttributeNS(XML_URI, "linecolor"))
+            self.set_linewidth(xmlnode.getAttributeNS(XML_URI, "linewidth"))
+
+            #######
+            self.set_fillcolor(xmlnode.getAttributeNS(XML_URI, "fillcolor")) #in use?
+            #######
+
+            self.set_width(xmlnode.getAttributeNS(XML_URI, "width"))
+            self.set_height(xmlnode.getAttributeNS(XML_URI, "height"))
+
+        else:
+            log.debug("Constructing a Rectangle using default values")
+            config = ConfigurationManager()
+
+            self.set_x(0)
+            self.set_y(0)
+
+            self.set_linecolor(config.get_linecolor())
+            self.set_linewidth(2) #default value used in goocanvas
+
+            #############
+            from rascase.views.base import TANGO_COLOR_BUTTER_LIGHT
+            self.set_fillcolor(TANGO_COLOR_BUTTER_LIGHT)
+            #############
+
+            self.set_width(40)
+            self.set_height(40)
+
 
 class PhysicalBase:
     def __init__(self):
