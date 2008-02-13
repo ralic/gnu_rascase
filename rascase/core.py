@@ -1041,6 +1041,7 @@ class Rectangle(RectBase):
 
 class PhysicalBase:
     def __init__(self):
+        log.debug("PhysicalBase.__init__()")
         self._name = str()
         self._codename = str()
         self._description = str()
@@ -1067,7 +1068,8 @@ class PhysicalBase:
         raise NotImplemented
 
 
-
+#TODO: agregar los metodos necesarios para la manipulacion de
+#      las tablas y las referencias(agregar, borrar, get)
 class PhysicalModel(ModelBase):
     def __init__(self, logicalmodel=None, path=None):
         log.debug("PhysicalModel.__init__(logicalmodel=%s, path=%s)",
@@ -1075,26 +1077,43 @@ class PhysicalModel(ModelBase):
 
         self._script_plugin = None
         self._dict_plugin = None
-        self._tables_list = None
-        self._references = None
+        self._tables_list = list()
+        self._references_list = list()
+
+        #TODO: construir el modelo en base a un archivo o a un modelo logico
 
     def generate_script(self, path=None):
-        return False
+        if self._script_plugin == None:
+            log.debug("Trying to generate a script without a selected script: %s", path)
+            return False
 
     def generate_dictionary(self, path=None):
-        return False
+        if self._dict_plugin == None:
+            log.debug("Trying to generate a dictionary without a selected script: %s", path)
+            return False
 
     def set_script_plugin(self, plugin):
-        pass
+        if not isinstance(plugin, plugins.IPluginScriptGenerator):
+            log.debug("%s is not an instance of IPluginScriptGenerator", plugin)
+            raise RuntimeError
+        else:
+            self._script_plugin = plugin
 
     def get_script_plugin(self):
         return self._script_plugin
 
     def set_dict_plugin(self, plugin):
-        pass
+        if not isinstance(plugin, plugins.IPluginDataDictGenerator):
+            log.debug("%s is not an instance of IPluginDataDictGenerator", plugin)
+            raise RuntimeError
+        else:
+            self._dict_plugin = plugin
 
     def get_dict_plugin(self):
         return self._dict_plugin
+
+    def to_xml(self, doc, uri):
+        raise NotImplemented
 
 class Table:
     def __init__(self):
