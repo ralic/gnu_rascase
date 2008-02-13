@@ -672,27 +672,39 @@ class Relationship(LogicalBase):
     def __init__(self, entity1=None, entity2=None, xmlnode=None, model=None):
         LogicalBase.__init__(self)
         self._cardinality = Relationship.CARDINALITY_1_N
-        self._entity1 = entity1
-        self._entity2 = entity2
+        self.set_entity1(entity1)
+        self.set_entity2(entity2)
 
         if ((xmlnode != None) and (model != None)):
+            log.debug("Constructing a relationship using a xml node")
             self.set_name(xmlnode.getAttributeNS(XML_URI, "name"))
             self.set_codename(xmlnode.getAttributeNS(XML_URI, "codename"))
             self.set_description(xmlnode.getAttributeNS(XML_URI, "description"))
 
             self._cardinality = int(xmlnode.getAttributeNS(XML_URI, "cardinality"))
-            self._entity1 = model.get_entity(xmlnode.getAttributeNS(XML_URI, "entity1"))
-            self._entity2 = model.get_entity(xmlnode.getAttributeNS(XML_URI, "entity2"))
+
+            self.set_entity1(model.get_entity(xmlnode.getAttributeNS(XML_URI, "entity1")))
+            if self.get_entity1() == None:
+                raise RuntimeError, "When creating a relationship from a xmlnode \
+                could not be located the entity 1 instance"
+
+            self.set_entity2(model.get_entity(xmlnode.getAttributeNS(XML_URI, "entity2")))
+            if self.get_entity2() == None:
+                raise RuntimeError, "When creating a relationship from a xmlnode \
+                could not be located the entity 2 instance"
 
             self.set_linecolor(xmlnode.getAttributeNS(XML_URI, "linecolor"))
 
         elif (entity1 != None) and (entity2 != None):
+            log.debug("Constructing a relationship using the default values")
             config = ConfigurationManager()
-            self._linecolor = config.get_relationship_color()
+            self.set_linecolor(config.get_relationship_color())
 
         else:
-            log.debug("Trying to construct a relationship without giving the right arguments")
-            raise RuntimeError
+            log.debug("Trying to construct a relationship without giving the right arguments \n\
+            entity1=%s, entity2=%s, xmlnode=%s, model=%s",
+                      entit1, entity2, xmlnode, model)
+            raise RuntimeError, "Not giving the correct parameters"
 
     def set_cardinality(self, value):
         """Define la cardinalidad de la relacion.
@@ -718,13 +730,32 @@ class Relationship(LogicalBase):
         if not isinstance(entity, Entity):
             raise RuntimeError, "Trying to add an object that it is not one"
 
-        self._entity2
+        self._entity2 = entity
 
     def get_entity2(self):
         return self._entity2
 
     def set_linecolor(self, value):
         self._linecolor = value
+
+    def to_xml(self, doc, uri):
+        """Construye un nodo xml que representa la informacion que almacena el
+        objeto para que luego pueda ser recontruido
+
+        """
+        relation = doc.createElementNS(uri, "relationship")
+
+        relation.setAttributeNS(uri, "name", self.get_name())
+        relation.setAttributeNS(uri, "codename", self.get_codename())
+        relation.setAttributeNS(uri, "description", self.get_description())
+
+        relation.setAttributeNS(uri, "cardinality", self.get_cardinality())
+        relation.setattributens(uri, "entity1", self.get_entity1().get_codename())
+        relation.setattributens(uri, "entity2", self.get_entity2().get_codename())
+
+        relation.setattributens(uri, "linecolor", self.get_linecolor())
+
+        return relation #returns the xml node to be added to the document
 
 class Inheritance(LogicalBase):
     counter = 1
@@ -741,13 +772,13 @@ class Inheritance(LogicalBase):
 
             papa = xmlnode.getAttributeNS(XML_URI, "father")
             self.set_father(model.get_entity(papa))
-            if self.get_father() != None:
+            if self.get_father() == None:
                 raise RuntimeError, "When creating an inheritance from a xmlnode \
                 could not be located the father entity instance"
 
             hijo = xmlnode.getAttributeNS(XML_URI, "son")
             self.set_son(model.get_entity(son))
-            if self.get_father() != None:
+            if self.get_father() == None:
                 raise RuntimeError, "When creating an inheritance from a xmlnode \
                 could not be located the son entity instance"
 
@@ -792,7 +823,18 @@ class Inheritance(LogicalBase):
         self._linecolor = value
 
     def to_xml(self, doc, uri):
-        pass
+        inheritance = doc.createElementNS(uri, "inheritance")
+
+        inheritance.setattributens(uri, "name", self.get_name())
+        inheritance.setattributens(uri, "codename", self.get_codename())
+        inheritance.setattributens(uri, "name", self.get_description())
+
+        inheritance.setattributens(uri, "father", self.get_father().get_codename())
+        inheritance.setattributens(uri, "son", self.get_son().get_codename())
+
+        inheritance.setattributens(uri, "linecolor", self.get_linecolor())
+
+        return inheritance #returns the xml node
 
 
 class LogicalDataType:
