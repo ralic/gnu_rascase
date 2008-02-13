@@ -987,8 +987,10 @@ class Label(RectBase):
         label.setAttributeNS(uri, "linecolor", self.get_linecolor())
         label.setAttributeNS(uri, "fillcolor", self.get_fillcolor())
         label.setAttributeNS(uri, "linewidth", self.get_fillcolor())
+
         label.setAttributeNS(uri, "width", self.get_width())
         label.setAttributeNS(uri, "height", self.get_height())
+
         label.setAttributeNS(uri, "x", self.get_x())
         label.setAttributeNS(uri, "y", self.get_y())
 
@@ -1019,44 +1021,50 @@ class Rectangle(RectBase):
             log.debug("Constructing a Rectangle using default values")
             config = ConfigurationManager()
 
-            self.set_x(0)
-            self.set_y(0)
+            self.set_x(x)
+            self.set_y(y)
 
             self.set_linecolor(config.get_linecolor())
             self.set_linewidth(2) #default value used in goocanvas
 
             #############
-            from rascase.views.base import TANGO_COLOR_BUTTER_LIGHT
+            from rascase.views import TANGO_COLOR_BUTTER_LIGHT
             self.set_fillcolor(TANGO_COLOR_BUTTER_LIGHT)
             #############
 
             self.set_width(40)
             self.set_height(40)
 
+################################################################################
+#                         Physical                                             #
+################################################################################
 
 class PhysicalBase:
     def __init__(self):
-        self._name = None
-        self._codename = None
-        self._description = None
+        self._name = str()
+        self._codename = str()
+        self._description = str()
 
     def set_name(self, name):
-        pass
+        self._name = str(name)
 
     def get_name(self):
-        pass
+        return self._name
 
     def set_codename(self, codename):
-        pass
+        self._codename = str(codename)
 
     def get_codename(self):
-        pass
+        return self._codename
 
     def set_description(self, description):
-        pass
+        self._description = str(description)
+
+    def get_description(self):
+        return self._description
 
     def check(self):
-        pass
+        raise NotImplemented
 
 
 
