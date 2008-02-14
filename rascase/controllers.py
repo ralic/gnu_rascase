@@ -21,64 +21,6 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 
-class ControlEntityComponent:
-    def __initi__(self):
-        pass
-
-class ControlAttributeComponent:
-    def __init__(self):
-        pass
-
-class ControlRelationshipComponent:
-    def __init__(self):
-        pass
-
-class ControlInheritanceComponent:
-    def __init__(self):
-        pass
-
-class ControlTableComponent:
-    def __init__(self):
-        pass
-
-class ControlReferenceComponent:
-    def __init__(self):
-        pass
-
-class ControlRectangleComponent:
-    def __init__(self):
-        pass
-
-class ControlLabelComponent:
-    def __init__(self):
-        pass
-
-
-
-### logical.py
-class ControlEditEntity:
-    def __init__(self, entity):
-        self._entity = entity
-
-    def save(self):
-        pass
-
-class ControlEditLabel:
-    def __init__(self, label):
-        self._label = label
-
-    def save_text(self, text):
-        pass
-
-class ControlEditRectangle:
-    def __init__(self, rectangle):
-        pass
-
-    def save(self):
-        pass
-
-### main.py
-# importa los modulos del sistema
 import sys
 import logging
 import gtk
@@ -86,12 +28,14 @@ import gtk.glade
 from pkg_resources import resource_filename
 
 # importa los modulos locales
-from rascase.views.main import *
+from rascase.views import *
 from rascase.core import *
 
 def start():
     """
-    Esta función es solo para inicializar la aplicación
+    Esta función es solo para inicializar la aplicación y no debe ser utilizada,
+    salvo por el script generado por setuptools
+
     """
     # this code was taken from exaile <http://www.exaile.org>
     if sys.platform == 'linux2':
@@ -131,6 +75,59 @@ def start():
     log.info('Starting the application')
 
     ControlMainWindow()
+
+class ControlEntityComponent:
+    def __init__(self):
+        pass
+
+class ControlAttributeComponent:
+    def __init__(self):
+        pass
+
+class ControlRelationshipComponent:
+    def __init__(self):
+        pass
+
+class ControlInheritanceComponent:
+    def __init__(self):
+        pass
+
+class ControlTableComponent:
+    def __init__(self):
+        pass
+
+class ControlReferenceComponent:
+    def __init__(self):
+        pass
+
+class ControlRectangleComponent:
+    def __init__(self):
+        pass
+
+class ControlLabelComponent:
+    def __init__(self):
+        pass
+
+class ControlEditEntity:
+    def __init__(self, entity):
+        self._entity = entity
+
+    def save(self):
+        pass
+
+class ControlEditLabel:
+    def __init__(self, label):
+        self._label = label
+
+    def save_text(self, text):
+        pass
+
+class ControlEditRectangle:
+    def __init__(self, rectangle):
+        pass
+
+    def save(self):
+        pass
 
 class ControlMainWindow:
     def __init__(self):
