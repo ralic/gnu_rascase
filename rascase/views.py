@@ -838,6 +838,8 @@ class ViewMainWindow:
         self._win.show_all()
 
     def _construct_toolbar(self):
+        log.debug("Constructing the toolbar")
+
         uifile = resource_filename('rascase.resources.uidefs', 'ui.xml')
 
         self._uimanager = gtk.UIManager()
@@ -868,7 +870,7 @@ class ViewMainWindow:
              self.on_add_model_to_project),
             ('RemoveModel', gtk.STOCK_REMOVE, None, None, 'Remover modelo del proyecto',
              self.on_remove_model),
-            ('DeleteModel', gtk.STOCK_DELETE, None, None, 'Remover modelo del proyecto y eliminar el modelo',
+            ('DeleteModel', gtk.STOCK_DELETE, None, None, 'Borrar el modelo',
              self.on_delete_model),
             ('Edit', None, '_Editar', None, None, None),
             ('EditElement', gtk.STOCK_EDIT, None, None, 'Editar el elemento seleccionado',
