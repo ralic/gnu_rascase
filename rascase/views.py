@@ -21,8 +21,16 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 
-import goocanvas
+import gobject
 import gtk
+import gtk.glade
+import goocanvas
+##logging system
+import logging
+log = logging.getLogger('views')
+##
+
+from pkg_resources import resource_filename
 
 #Tango colors taken from 
 #http://tango.freedesktop.org/Tango_Icon_Theme_Guidelines
@@ -153,39 +161,39 @@ class DragBox(goocanvas.Rect):
             return True
         else:
             return False
-        
+
     #senales
     def on_button_press(self,item,target,event):
-        
+
         self._dragging = True
         fleur = gtk.gdk.Cursor(gtk.gdk.FLEUR)
         canvas = item.get_canvas ()
-        canvas.pointer_grab(item, 
+        canvas.pointer_grab(item,
                             gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.BUTTON_RELEASE_MASK,
                             fleur, event.time)
         self.drag_x = event.x
         self.drag_y = event.y
         return True
-    
+
     def on_button_release(self,item,target,event):
         self._dragging = False
         canvas = item.get_canvas ()
         canvas.pointer_ungrab(item, event.time)
-            
+
         return True
-        
+
     def on_enter_notify(self,item,target,event):
         item.props.fill_color = "yellow"
-        
+
     def on_leave_notify(self,item,target,event):
         item.props.fill_color = "black"
-        
+
     def on_motion(self,item,target,event):
         canvas = item.get_canvas ()
 
         if not (event.state == gtk.gdk.BUTTON1_MASK) and not self._dragging:
             return False
-        
+
         new_x = event.x
         new_y = event.y
         if item.name == 'N':
@@ -210,7 +218,7 @@ class DragBox(goocanvas.Rect):
 
             item.get_parent().get_body().props.width = \
                 item.get_parent().get_body().props.width + dif_x
-            
+
             item.get_parent().get_body().props.height = \
                 item.get_parent().get_body().props.height - dif_y
 
@@ -225,7 +233,7 @@ class DragBox(goocanvas.Rect):
         elif item.name == 'E':
             dif = new_x - self.drag_x
             item.translate(dif,0)
-           
+
             item.get_parent().get_body().props.width = \
                 item.get_parent().get_body().props.width + dif
 
@@ -239,7 +247,7 @@ class DragBox(goocanvas.Rect):
             dif_x = new_x - self.drag_x
             dif_y = new_y - self.drag_y
             item.translate(dif_x, dif_y)
-            
+
             item.get_parent().get_body().props.width = \
                 item.get_parent().get_body().props.width + dif_x
 
@@ -253,11 +261,11 @@ class DragBox(goocanvas.Rect):
             item.get_parent().dragbox['S'].translate (dif_x/2, dif_y)
             item.get_parent().dragbox['SW'].translate (0, dif_y)
             item.get_parent().dragbox['W'].translate (0, dif_y/2)
-            
+
         elif item.name == 'S':
             dif = new_y - self.drag_y
             item.translate(0,dif)
-            
+
             item.get_parent().get_body().props.height = \
                 item.get_parent().get_body().props.height + dif
 
@@ -335,36 +343,6 @@ class RectangleComponent(RectBaseComponent):
 class LabelComponent(RectBaseComponent):
     def __init__(self):
         RectBaseComponent
-# coding: utf-8
-##
-## components.py
-## Login : <freyes@yoda.>
-## Started on  Sun Dec 16 00:46:33 2007 Felipe Reyes
-## $Id$
-## 
-## Copyright (C) 2007 Felipe Reyes
-## This program is free software; you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation; either version 2 of the License, or
-## (at your option) any later version.
-## 
-## This program is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-## 
-## You should have received a copy of the GNU General Public License
-## along with this program; if not, write to the Free Software
-## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-##
-
-import goocanvas
-import gobject
-import gtk
-
-from pkg_resources import resource_filename
-
-from rascase.views.base import *
 
 class LineBaseComponent:
     def __init__(self):
@@ -681,9 +659,8 @@ class ReferenceComponent(LineBaseComponent):
 
 
 class Canvas:
-    """Esta clase configura el canvas que provee goocanvas
+    "Esta clase configura el canvas que provee goocanvas"
 
-    """
     def __init__(self):
         self.scrolled_win = gtk.ScrolledWindow()
         self.scrolled_win.set_shadow_type(gtk.SHADOW_IN)
@@ -726,30 +703,6 @@ class LabelComponent(RectBaseComponent):
         pass
 
 
-
-# coding=utf-8
-##
-## logical.py
-## Login : <freyes@yoda>
-## Started on  Mon Jan 21 15:47:31 2008 Felipe Reyes
-## $Id$
-## 
-## Copyright (C) 2008 Felipe Reyes
-## This program is free software; you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation; either version 2 of the License, or
-## (at your option) any later version.
-## 
-## This program is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-## 
-## You should have received a copy of the GNU General Public License
-## along with this program; if not, write to the Free Software
-## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-##
-
 class ViewEditEntity:
     def __init__(self, entity, control):
         self._window = None
@@ -766,7 +719,7 @@ class ViewEditEntity:
 
     def on_toolbtn_cut_attribute(self, toolbutton):
         pass
-    
+
     def on_toolbtn_copy_attribute(self, toolbutton):
         pass
 
@@ -804,7 +757,7 @@ class ViewEditRelationship:
     def on_btn_cancel_clicked(self, button):
         pass
 
-        
+
 class ViewEditLabel:
     def __init__(self, label, control):
         pass
@@ -831,42 +784,6 @@ class ViewEditRectangle:
     def on_btn_cancel_clicked(self, button):
         pass
 
-    
-# coding=utf-8
-"""Módulo que contiene las principales clases vista
-
-"""
-##
-## main.py
-## Login : <freyes@yoda.>
-## Started on  Sun Dec 16 16:17:45 2007 Felipe Reyes
-## $Id$
-## 
-## Copyright (C) 2007 Felipe Reyes
-## This program is free software; you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation; either version 2 of the License, or
-## (at your option) any later version.
-## 
-## This program is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-## 
-## You should have received a copy of the GNU General Public License
-## along with this program; if not, write to the Free Software
-## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-##
-
-import logging
-import gobject
-import gtk
-import gtk.glade
-import goocanvas
-
-from pkg_resources import resource_filename
-
-from rascase.views import components
 
 class ViewMainWindow:
     """Vista principal
@@ -875,7 +792,7 @@ class ViewMainWindow:
 
     """
     def __init__(self,control, file_=None):
-        logging.getLogger('views.main').info('ViewMainWindow.__init__: file_=%s', file_)
+        log.info('ViewMainWindow.__init__: file_=%s', file_)
         self.control = control #control que es dueño de la vista
         self.gladefile = resource_filename("rascase.resources.glade", "wndmain.glade")
         self.wTree = gtk.glade.XML(self.gladefile)
