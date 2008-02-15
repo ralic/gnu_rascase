@@ -827,15 +827,15 @@ class ViewMainWindow:
 
 
         # the properties of the window were defined
-        self._win = self.wTree.get_widget("wndmain")
-        self._win.set_default_size(600,500)
-        self._win.set_title("RasCASE")
-        if self._win is None:
+        self._window = self.wTree.get_widget("wndmain")
+        self._window.set_default_size(600,500)
+        self._window.set_title("RasCASE")
+        if self._window is None:
             print "self.win es none"
 
         self._construct_toolbar()
 
-        self._win.show_all()
+        self._window.show_all()
 
     def _construct_toolbar(self):
         log.debug("Constructing the toolbar")
@@ -844,7 +844,7 @@ class ViewMainWindow:
 
         self._uimanager = gtk.UIManager()
         accel_group = self._uimanager.get_accel_group()
-        self._win.add_accel_group(accel_group)
+        self._window.add_accel_group(accel_group)
 
         action_group = gtk.ActionGroup('my_actions')
         action_group.add_actions([#TODO:finish actions
@@ -862,7 +862,7 @@ class ViewMainWindow:
             ('CloseModel', gtk.STOCK_CLOSE, 'Cerrar Modelo', '<Control>w', None,
              self.on_close_file_clicked),
             ('Quit', gtk.STOCK_QUIT, None, '<Control>q', None,
-             self.on_quit_selected),
+             self._on_quit_selected),
             ('Project', None, '_Proyecto', None, None, None),
             ('OpenProject', gtk.STOCK_OPEN, None, '', 'Abrir proyecto',
              self.on_open_project),
@@ -918,8 +918,30 @@ class ViewMainWindow:
 
     # signals
 
-    def on_quit_selected(self, menuitem):
-        pass
+    def _on_quit_selected(self, menuitem):
+        dialog = gtk.Dialog("Salir",
+                            self._window,
+                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                             gtk.STOCK_QUIT, gtk.RESPONSE_ACCEPT))
+
+        box = gtk.HBox()
+
+        widget = gtk.Image()
+        widget.set_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_DIALOG)
+        box.pack_start(widget)
+
+        widget = gtk.Label("¿Desea salir y perder todos los cambios efectuados?")
+        box.pack_start(widget)
+
+        box.show_all()
+        dialog.vbox.pack_start(box)
+        dialog.connect("response", self._on_response_of_quit_dialog)
+        dialog.run()
+
+    def _on_response_of_quit_dialog(self, dialog, response_id):
+        if response_id == gtk.RESPONSE_ACCEPT:
+            gtk.main_quit()
 
     def on_new_project(self, menuitem):
         pass
