@@ -32,7 +32,7 @@ log = logging.getLogger('views')
 
 from pkg_resources import resource_filename
 
-#Tango colors taken from 
+#Tango colors taken from
 #http://tango.freedesktop.org/Tango_Icon_Theme_Guidelines
 TANGO_COLOR_BUTTER_LIGHT = int("fce94f",16)
 TANGO_COLOR_BUTTER_MID = int("edd400",16)
@@ -793,7 +793,7 @@ class ViewMainWindow:
     """
     def __init__(self,control, file_=None):
         log.info('ViewMainWindow.__init__: file_=%s', file_)
-        self.control = control #control que es dueño de la vista
+        self._control = control #control que es dueño de la vista
         self.gladefile = resource_filename("rascase.resources.glade", "wndmain.glade")
         self.wTree = gtk.glade.XML(self.gladefile)
 
@@ -808,7 +808,7 @@ class ViewMainWindow:
         self._canvas_list = None
         self._selected_item = None
 
-        signals_dic = {"on_wndmain_delete_event":gtk.main_quit}
+        signals_dic = {"on_wndmain_delete_event":self._on_delete_main_window}
         self.wTree.signal_autoconnect(signals_dic)
 
         # se ponen los archivos en el files_list
@@ -918,7 +918,16 @@ class ViewMainWindow:
 
     # signals
 
+    def _on_delete_main_window(self, widget, event):
+        "callback conectado al evento 'delete' de la ventana principal"
+
+        widget = self._uimanager.get_widget("/menubar/File/Quit")
+
+        widget.activate()
+        return True
+
     def _on_quit_selected(self, menuitem):
+        "callback conectado a la opcion salir de la aplicacion"
         dialog = gtk.Dialog("Salir",
                             self._window,
                             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
@@ -936,12 +945,12 @@ class ViewMainWindow:
 
         box.show_all()
         dialog.vbox.pack_start(box)
-        dialog.connect("response", self._on_response_of_quit_dialog)
-        dialog.run()
 
-    def _on_response_of_quit_dialog(self, dialog, response_id):
-        if response_id == gtk.RESPONSE_ACCEPT:
-            gtk.main_quit()
+        response = dialog.run()
+        dialog.destroy()
+
+        if response == gtk.RESPONSE_ACCEPT:
+            self._control.quit()
 
     def on_new_project(self, menuitem):
         pass

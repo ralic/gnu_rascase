@@ -71,7 +71,7 @@ def start():
     # Now, define a couple of other loggers which might represent areas in your
     # application:
 
-    log = logging.getLogger('controllers.main')
+    log = logging.getLogger('controllers')
     log.info('Starting the application')
 
     ControlMainWindow()
@@ -232,6 +232,11 @@ class ControlMainWindow:
 
     def new_model(self):
         pass
+
+    def quit(self):
+        log = logging.getLogger('controllers')
+        log.info("Quiting...")
+        gtk.main_quit()
 
 class ControlSaveFileDialog:
     def __init__(self, action, project=None, model=None, title=None, parent=None, filter=None):
