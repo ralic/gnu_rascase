@@ -131,7 +131,7 @@ class ControlMainWindow:
     def __init__(self):
         self._project = None
 
-        self.view = ViewMainWindow(control=self)
+        self._view = ViewMainWindow(control=self)
         gtk.main()
 
     def main(self):
@@ -157,7 +157,28 @@ class ControlMainWindow:
         pass
 
     def open_project(self, path):
-        pass
+
+        aux_path = path
+
+        #define the filter applied to the file chooser dialog
+        filtro = gtk.FileFilter()
+        filtro.add_pattern("*.rprj")
+        filtro.set_name("Proyecto")
+
+        if aux_path==None:
+            controlopenfile = ControlSaveFileDialog(action=gtk.FILE_CHOOSER_ACTION_OPEN,
+                                                    title="Abir Proyecto",
+                                                    parent=self._view.get_window(),
+                                                    filter=filtro)
+            aux_path = controlopenfile.get_path() #obtain the path selected by the user
+
+        self._project = Project(aux_path)
+
+        aux = list()
+        for elem in self._project.get_models():
+            aux.append(elem.get_path())
+
+        return aux
 
     def open_logical_model(self, path):
         pass
@@ -238,7 +259,18 @@ class ControlMainWindow:
 
 class ControlSaveFileDialog:
     def __init__(self, action, project=None, model=None, title=None, parent=None, filter=None):
-        pass
+
+        self._path = None
+        self._view = ViewFileDialog(action=action, title=title, parent=parent, filter=filter)
+
+        self.set_path(self._view.path)
+        log.debug("Path: %s", self._path)
 
     def save(self, filename):
         pass
+
+    def get_path(self):
+        return self._path
+
+    def set_path(self, path):
+        self._path = path

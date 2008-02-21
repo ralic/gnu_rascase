@@ -25,6 +25,7 @@ import gobject
 import gtk
 import gtk.glade
 import goocanvas
+import os
 ##logging system
 import logging
 log = logging.getLogger('views')
@@ -784,6 +785,26 @@ class ViewEditRectangle:
     def on_btn_cancel_clicked(self, button):
         pass
 
+class ViewFileDialog:
+    def __init__(self, action, title, parent, filter):
+
+        self.path = None
+        self._window = gtk.FileChooserDialog(action=action,
+                                             title=title,
+                                             parent=parent,
+                                             buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                                                      gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+
+        self._window.set_filter(filter)
+        self._window.set_property("select-multiple", False)
+        self._window.show_all()
+        response = self._window.run()
+
+        if response == gtk.RESPONSE_ACCEPT:
+            self.path = self._window.get_filename()
+
+        self._window.destroy()
+
 
 class ViewMainWindow:
     """Vista principal
@@ -795,7 +816,7 @@ class ViewMainWindow:
         log.info('ViewMainWindow.__init__: file_=%s', file_)
         self._control = control #control que es dueño de la vista
         self.gladefile = resource_filename("rascase.resources.glade", "wndmain.glade")
-        self.wTree = gtk.glade.XML(self.gladefile)
+        self._wTree = gtk.glade.XML(self.gladefile)
 
         ## widgets
         self._main_toolbar = None
@@ -809,7 +830,7 @@ class ViewMainWindow:
         self._selected_item = None
 
         signals_dic = {"on_wndmain_delete_event":self._on_delete_main_window}
-        self.wTree.signal_autoconnect(signals_dic)
+        self._wTree.signal_autoconnect(signals_dic)
 
         # se ponen los archivos en el files_list
         ## files_list = self.wTree.get_widget("files_list")
@@ -827,7 +848,7 @@ class ViewMainWindow:
 
 
         # the properties of the window were defined
-        self._window = self.wTree.get_widget("wndmain")
+        self._window = self._wTree.get_widget("wndmain")
         self._window.set_default_size(600,500)
         self._window.set_title("RasCASE")
         if self._window is None:
@@ -838,6 +859,7 @@ class ViewMainWindow:
         self._window.show_all()
 
     def _construct_toolbar(self):
+        "Construye la barra de herramientas y el menu usando GtkUIManager"
         log.debug("Constructing the toolbar")
 
         uifile = resource_filename('rascase.resources.uidefs', 'ui.xml')
@@ -865,7 +887,7 @@ class ViewMainWindow:
              self._on_quit_selected),
             ('Project', None, '_Proyecto', None, None, None),
             ('OpenProject', gtk.STOCK_OPEN, None, '', 'Abrir proyecto',
-             self.on_open_project),
+             self._on_open_project),
             ('AddModel', gtk.STOCK_ADD, None, None, 'Añadir un modelo',
              self.on_add_model_to_project),
             ('RemoveModel', gtk.STOCK_REMOVE, None, None, 'Remover modelo del proyecto',
@@ -906,7 +928,7 @@ class ViewMainWindow:
         self._uimanager.insert_action_group(action_group, 0)
         self._uimanager.add_ui_from_file(uifile)
 
-        box = self.wTree.get_widget("vbox_main")
+        box = self._wTree.get_widget("vbox_main")
         #pack the menubar
         menubar = self._uimanager.get_widget("/menubar")
         box.pack_start(menubar, False)
@@ -958,8 +980,23 @@ class ViewMainWindow:
     def on_new_model(self, menuitem):
         pass
 
-    def on_open_project(self, menuitem):
-        pass
+    def _on_open_project(self, menuitem):
+
+        self._files_list = self._control.open_project(path=None)
+
+        liststore = gtk.ListStore(gobject.TYPE_STRING)
+        treeview = self._wTree.get_widget("files_list")
+
+        treeview.set_model(liststore)
+
+        for elem in self._files_list:
+            liststore.append([os.path.basename(str(elem))])
+
+        treeviewcol = gtk.TreeViewColumn("Modelos")
+        treeview.append_column(treeviewcol)
+        cell = gtk.CellRendererText()
+        treeviewcol.pack_start(cell)
+        treeviewcol.add_attribute(cell, "text", 0)
 
     def on_open_model(self, menuitem):
         pass
@@ -1039,4 +1076,7 @@ class ViewMainWindow:
 
     def on_about_clicked(self, menuitem):
         pass
+
+    def get_window(self):
+        return self._window
 

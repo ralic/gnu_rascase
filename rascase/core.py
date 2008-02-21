@@ -1075,6 +1075,7 @@ class PhysicalModel(ModelBase):
         log.debug("PhysicalModel.__init__(logicalmodel=%s, path=%s)",
                   logicalmodel, path)
 
+        ModelBase.__init__(self,path)
         self._script_plugin = None
         self._dict_plugin = None
         self._tables_list = list()
