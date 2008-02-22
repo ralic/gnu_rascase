@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.4.1 on Fri Jan 25 14:35:16 2008 -->
+<!--Generated with glade3 3.4.1 on Thu Feb 21 13:29:45 2008 -->
 <glade-interface>
   <widget class="GtkWindow" id="wndmain">
     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
@@ -27,6 +27,7 @@
                 <property name="can_focus">True</property>
                 <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                 <property name="headers_clickable">True</property>
+                <signal name="row_activated" handler="on_files_list_row_activated"/>
               </widget>
               <packing>
                 <property name="resize">False</property>

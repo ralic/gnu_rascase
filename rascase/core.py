@@ -31,6 +31,8 @@ import xml.dom.ext
 import logging
 import os
 
+from rascase import plugins
+
 from datetime import datetime
 from time import time
 from shutil import copy
@@ -599,6 +601,9 @@ class Entity(LogicalBase, RectBase):
 
         return entity
 
+    def get_attributes(self):
+        return self._attributes_list
+
 class Attribute(LogicalBase):
     def __init__(self, xmlnode=None):
         log.debug("Constructing an Attribute")
@@ -703,7 +708,7 @@ class Relationship(LogicalBase):
         else:
             log.debug("Trying to construct a relationship without giving the right arguments \n\
             entity1=%s, entity2=%s, xmlnode=%s, model=%s",
-                      entit1, entity2, xmlnode, model)
+                      entity1, entity2, xmlnode, model)
             raise RuntimeError, "Not giving the correct parameters"
 
     def set_cardinality(self, value):
@@ -788,8 +793,8 @@ class Inheritance(LogicalBase):
             config = ConfigurationManager()
             self._linecolor = config.get_inheritance_color()
 
-            self.set_name("Herencia ", str(Inheritance.counter))
-            self.set_codename("HERENCIA_", str(Inheritance.counter))
+            self.set_name("Herencia " + str(Inheritance.counter))
+            self.set_codename("HERENCIA_" + str(Inheritance.counter))
             Inheritance.counter += 1
 
     def set_father(self, entity):
@@ -825,14 +830,14 @@ class Inheritance(LogicalBase):
     def to_xml(self, doc, uri):
         inheritance = doc.createElementNS(uri, "inheritance")
 
-        inheritance.setattributens(uri, "name", self.get_name())
-        inheritance.setattributens(uri, "codename", self.get_codename())
-        inheritance.setattributens(uri, "name", self.get_description())
+        inheritance.setAttributeNS(uri, "name", self.get_name())
+        inheritance.setAttributeNS(uri, "codename", self.get_codename())
+        inheritance.setAttributeNS(uri, "name", self.get_description())
 
-        inheritance.setattributens(uri, "father", self.get_father().get_codename())
-        inheritance.setattributens(uri, "son", self.get_son().get_codename())
+        inheritance.setAttributeNS(uri, "father", self.get_father().get_codename())
+        inheritance.setAttributeNS(uri, "son", self.get_son().get_codename())
 
-        inheritance.setattributens(uri, "linecolor", self.get_linecolor())
+        inheritance.setAttributeNS(uri, "linecolor", self.get_linecolor())
 
         return inheritance #returns the xml node
 
@@ -931,7 +936,7 @@ class Label(RectBase):
 
         if xmlnode != None:
             log.debug("Constructing a Label using a xml node")
-            self._text = xmlnode.getElementsByTagNameNS(uri, "text")[0].childNodes[0].nodeValue
+            self._text = xmlnode.getElementsByTagNameNS(XML_URI, "text")[0].childNodes[0].nodeValue
 
             self.set_linecolor(xmlnode.getAttributeNS(XML_URI, "linecolor"))
             self.set_linewidth(xmlnode.getAttributeNS(XML_URI, "linewidth"))

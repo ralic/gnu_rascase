@@ -64,6 +64,172 @@ TANGO_COLOR_ALUMINIUM2_MID = int("555753",16)
 TANGO_COLOR_ALUMINIUM2_DARK = int("2e3436",16)
 TRANSPARENT_COLOR = int("000000",16)
 
+class RectBaseComponent(goocanvas.Group):
+
+    #define a custom signal
+    __gsignals__ = {
+        'on-movement': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+        }
+
+    _ANCHO = 100
+    _ALTO = 200
+    _ANCHO_LINEA = 1.0
+    _COLOR_RELLENO = TANGO_COLOR_SKYBLUE_LIGHT
+
+    def __init__(self, x, y, fill_color, stroke_color, bodytype='rect'):
+        goocanvas.Group.__init__(self,can_focus = True)
+
+        if (bodytype == 'table'):
+            self._body = goocanvas.Table(width=EntityComponent._ANCHO,
+                                         height=EntityComponent._ALTO,
+                                         line_width=EntityComponent._ANCHO_LINEA)
+
+        elif (bodytype == 'rect'):
+            self._body = goocanvas.Rect(width=EntityComponent._ANCHO,
+                                        height=EntityComponent._ALTO,
+                                        line_width=EntityComponent._ANCHO_LINEA,
+                                        fill_color_rgb=fill_color,
+                                        stroke_color=stroke_color)
+        else:
+            raise RuntimeError
+
+        self.translate(x, y)
+        print EntityComponent._COLOR_RELLENO
+        self.add_child(self._body)
+        self._dragging= False
+
+        self.dragbox = {
+            'NW': DragBox('NW',-5,-5),
+            'N' : DragBox('N', self._ANCHO/2-2.5,-5),
+            'NE': DragBox('NE',self._ANCHO-5,-5),
+            'E' : DragBox('E', self._ANCHO-5,self._ALTO/2),
+            'SE': DragBox('SE',self._ANCHO-5,self._ALTO-5),
+            'S' : DragBox('S', self._ANCHO/2-2.5,self._ALTO-5),
+            'SW': DragBox('SW',-5, self._ALTO-5),
+            'W' : DragBox('W', -5,self._ALTO/2)
+            }
+
+        for item in self.dragbox.keys():
+            self.add_child(self.dragbox[item])
+
+        #signals del foco
+        self.connect("focus_in_event", self.on_focus_in)
+        self.connect("focus_out_event", self.on_focus_out)
+        self.connect("button_press_event", self.on_double_click_press)
+        self.connect("button_press_event",self.on_button_press)
+        self.connect("button_release_event",self.on_button_release)
+        self.connect("motion_notify_event",self.on_motion)
+        self.connect("enter_notify_event",self.on_enter_notify)
+        self.connect("leave_notify_event",self.on_leave_notify)
+
+
+    #senales
+    def on_double_click_press(self,item,target,event):
+        if event.type == gtk.gdk._2BUTTON_PRESS:
+            print "*** se hizo doble click", type(target)
+
+
+    def on_focus_in (self, item, target_item, event):
+        for aux in self.dragbox.keys():
+            self.dragbox[aux].props.visibility = goocanvas.ITEM_VISIBLE
+
+    def on_focus_out (self, item, target_item, event):
+        for aux in self.dragbox.keys():
+            self.dragbox[aux].props.visibility = goocanvas.ITEM_HIDDEN
+
+    def on_button_press(self,item,target,event):
+        canvas = item.get_canvas()
+        canvas.grab_focus(item)
+
+        for aux in self.dragbox.keys():
+            if self.dragbox[aux].is_dragging():
+                return True
+
+        self._dragging = True
+        fleur = gtk.gdk.Cursor(gtk.gdk.FLEUR)
+        canvas = item.get_canvas ()
+        canvas.pointer_grab(item,
+                        gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.BUTTON_RELEASE_MASK,
+                        fleur, event.time)
+        self.drag_x = event.x
+        self.drag_y = event.y
+        return True
+
+    def on_button_release(self,item,target,event):
+        for aux in self.dragbox.keys():
+            if self.dragbox[aux].is_dragging():
+                return True
+
+        self._dragging = False
+        canvas = item.get_canvas ()
+        canvas.pointer_ungrab(item, event.time)
+        return True
+
+    def on_enter_notify(self,item,target,event):
+        pass
+
+    def on_leave_notify(self,item,target,event):
+        pass
+
+    def on_motion(self,item,target,event):
+        for aux in self.dragbox.keys():
+            if self.dragbox[aux].is_dragging():
+                return True
+
+        canvas = item.get_canvas ()
+
+        if not (event.state == gtk.gdk.BUTTON1_MASK) and not self._dragging:
+            return False
+
+        new_x = event.x
+        new_y = event.y
+        item.translate (new_x - self.drag_x, new_y - self.drag_y)
+        self.emit('on-movement')
+
+
+    def set_x(self, x):
+        pass
+
+    def get_x(self):
+        pass
+
+    def set_y(self, y):
+        pass
+
+    def get_y(self):
+        pass
+
+    def set_width(self, width):
+        pass
+
+    def get_width(self):
+        pass
+
+    def set_height(self, height):
+        pass
+
+    def get_height(self):
+        pass
+
+    def set_linecolor(self, color):
+        pass
+
+    def get_linecolor(self):
+        pass
+
+    def set_linewidth(self, width):
+        pass
+
+    def get_linewidth(self):
+        pass
+
+    def set_fillcolor(self, color):
+        pass
+
+    def get_fillcolor(self, color):
+        pass
+
+
 class RectBaseComponent:
     def __init__(self, bodytype='rect'):
         self._body = None
@@ -158,7 +324,7 @@ class DragBox(goocanvas.Rect):
 
 
     def is_dragging(self):
-        if self._dragging == True:
+        if self._dragging:
             return True
         else:
             return False
@@ -343,7 +509,7 @@ class RectangleComponent(RectBaseComponent):
 
 class LabelComponent(RectBaseComponent):
     def __init__(self):
-        RectBaseComponent
+        RectBaseComponent.__init__(self)
 
 class LineBaseComponent:
     def __init__(self):
@@ -362,170 +528,6 @@ class LineBaseComponent:
     def get_line_color(self):
         pass
 
-class RectBaseComponent(goocanvas.Group):
-
-    #define a custom signal
-    __gsignals__ = {
-        'on-movement': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
-        }
-
-    _ANCHO = 100
-    _ALTO = 200
-    _ANCHO_LINEA = 1.0
-    _COLOR_RELLENO = TANGO_COLOR_SKYBLUE_LIGHT
-
-    def __init__(self, x, y, fill_color, stroke_color, bodytype='rect'):
-        goocanvas.Group.__init__(self,can_focus = True)
-
-        if (bodytype == 'table'):
-            self._body = goocanvas.Table(width=EntityComponent._ANCHO,
-                                         height=EntityComponent._ALTO,
-                                         line_width=EntityComponent._ANCHO_LINEA)
-
-        elif (bodytype == 'rect'):
-            self._body = goocanvas.Rect(width=EntityComponent._ANCHO,
-                                        height=EntityComponent._ALTO,
-                                        line_width=EntityComponent._ANCHO_LINEA,
-                                        fill_color_rgb=fill_color,
-                                        stroke_color=stroke_color)
-        else:
-            raise RuntimeError
-
-        self.translate(x, y)
-        print EntityComponent._COLOR_RELLENO
-        self.add_child(self._body)
-        self._dragging= False
-
-        self.dragbox = {
-            'NW': rascase.views.base.DragBox('NW',-5,-5),
-            'N' : rascase.views.base.DragBox('N', self._ANCHO/2-2.5,-5),
-            'NE': rascase.views.base.DragBox('NE',self._ANCHO-5,-5),
-            'E' : rascase.views.base.DragBox('E', self._ANCHO-5,self._ALTO/2),
-            'SE': rascase.views.base.DragBox('SE',self._ANCHO-5,self._ALTO-5),
-            'S' : rascase.views.base.DragBox('S', self._ANCHO/2-2.5,self._ALTO-5),
-            'SW': rascase.views.base.DragBox('SW',-5, self._ALTO-5),
-            'W' : rascase.views.base.DragBox('W', -5,self._ALTO/2)
-            }
-
-        for item in self.dragbox.keys():
-            self.add_child(self.dragbox[item])
-
-        #signals del foco
-        self.connect("focus_in_event", self.on_focus_in)
-        self.connect("focus_out_event", self.on_focus_out)
-        self.connect("button_press_event", self.on_double_click_press)
-        self.connect("button_press_event",self.on_button_press)
-        self.connect("button_release_event",self.on_button_release)
-        self.connect("motion_notify_event",self.on_motion)
-        self.connect("enter_notify_event",self.on_enter_notify)
-        self.connect("leave_notify_event",self.on_leave_notify)
-
-
-    #senales
-    def on_double_click_press(self,item,target,event):
-        if event.type == gtk.gdk._2BUTTON_PRESS:
-            print "*** se hizo doble click", type(target)
-
-
-    def on_focus_in (self, item, target_item, event):
-        for aux in self.dragbox.keys():
-            self.dragbox[aux].props.visibility = goocanvas.ITEM_VISIBLE
-
-    def on_focus_out (self, item, target_item, event):
-        for aux in self.dragbox.keys():
-            self.dragbox[aux].props.visibility = goocanvas.ITEM_HIDDEN
-
-    def on_button_press(self,item,target,event):
-        canvas = item.get_canvas()
-        canvas.grab_focus(item)
-
-        for aux in self.dragbox.keys():
-            if self.dragbox[aux].is_dragging():
-                return True
-
-        self._dragging = True
-        fleur = gtk.gdk.Cursor(gtk.gdk.FLEUR)
-        canvas = item.get_canvas ()
-        canvas.pointer_grab(item,
-                        gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.BUTTON_RELEASE_MASK,
-                        fleur, event.time)
-        self.drag_x = event.x
-        self.drag_y = event.y
-        return True
-
-    def on_button_release(self,item,target,event):
-        for aux in self.dragbox.keys():
-            if self.dragbox[aux].is_dragging():
-                return True
-
-        self._dragging = False
-        canvas = item.get_canvas ()
-        canvas.pointer_ungrab(item, event.time)
-        return True
-
-    def on_enter_notify(self,item,target,event):
-        pass
-
-    def on_leave_notify(self,item,target,event):
-        pass
-
-    def on_motion(self,item,target,event):
-        for aux in self.dragbox.keys():
-            if self.dragbox[aux].is_dragging():
-                return True
-
-        canvas = item.get_canvas ()
-
-        if not (event.state == gtk.gdk.BUTTON1_MASK) and not self._dragging:
-            return False
-
-        new_x = event.x
-        new_y = event.y
-        item.translate (new_x - self.drag_x, new_y - self.drag_y)
-        self.emit('on-movement')
-
-
-    def set_x(self, x):
-        pass
-
-    def get_x(self):
-        pass
-
-    def set_y(self, y):
-        pass
-
-    def get_y(self):
-        pass
-
-    def set_width(self, width):
-        pass
-
-    def get_width(self):
-        pass
-
-    def set_height(self, height):
-        pass
-
-    def get_height(self):
-        pass
-
-    def set_linecolor(self, color):
-        pass
-
-    def get_linecolor(self):
-        pass
-
-    def set_linewidth(self, width):
-        pass
-
-    def get_linewidth(self):
-        pass
-
-    def set_fillcolor(self, color):
-        pass
-
-    def get_fillcolor(self, color):
-        pass
 
 
 class EntityComponent(RectBaseComponent):
@@ -533,15 +535,16 @@ class EntityComponent(RectBaseComponent):
     def __init__(self, x, y, stroke_color, fill_color):
         #goocanvas.Group.__init__(self, can_focus = True)
         RectBaseComponent.__init__(self, x, y, stroke_color, fill_color)
+        self._num_columns = 0
 
     def add_attribute(self,attribute):
         """Agrega un nuevo atributo a la entidad"""
 
-        self._cuerpo.add_child(attribute)
-        self._cuerpo.set_child_properties(attribute,
-                                          row=self._num_columns,
-                                          column=0,
-					  x_align=0.0)
+        self._body.add_child(attribute)
+        self._body.set_child_properties(attribute,
+                                        row=self._num_columns,
+                                        column=0,
+                                        x_align=0.0)
         print "numero de columnas", self._num_columns
         self._num_columns += 1
         self.request_update()
@@ -681,29 +684,6 @@ class Canvas:
     def add_child(self, child):
         self._mycanvas.get_root_item().add_child(child)
 
-
-class RectangleComponent(RectBaseComponent):
-    def __init__(self):
-        RectBaseComponent.__init__(self)
-        self._transparency = 0.0
-
-    def set_transparency(self, opacity):
-        pass
-
-class LabelComponent(RectBaseComponent):
-    def __init__(self, x, y, text):
-        RectBaseComponent.__init__(self)
-        self.set_x(x)
-        self.set_y(y)
-        self._text = text
-
-    def set_text(self, text):
-        pass
-
-    def get_text(self):
-        pass
-
-
 class ViewEditEntity:
     def __init__(self, entity, control):
         self._window = None
@@ -829,7 +809,10 @@ class ViewMainWindow:
         self._canvas_list = None
         self._selected_item = None
 
-        signals_dic = {"on_wndmain_delete_event":self._on_delete_main_window}
+
+        # the association of the signals defined inside glade and the python methods
+        signals_dic = {"on_wndmain_delete_event":self._on_delete_main_window,
+                       "on_files_list_row_activated":self._on_files_list_row_activated}
         self._wTree.signal_autoconnect(signals_dic)
 
         # se ponen los archivos en el files_list
@@ -982,6 +965,7 @@ class ViewMainWindow:
 
     def _on_open_project(self, menuitem):
 
+        # obtain the list of models associated to the project
         self._files_list = self._control.open_project(path=None)
 
         liststore = gtk.ListStore(gobject.TYPE_STRING)
@@ -1077,6 +1061,11 @@ class ViewMainWindow:
     def on_about_clicked(self, menuitem):
         pass
 
+    def _on_files_list_row_activated(self, treeview, path, view_column):
+        canvas = self._control.construct_model(self._files_list[path[0]])
+        pass
+
     def get_window(self):
+        "retorna la ventana principal, para ser utilizada en los dialogos como ventana padre"
         return self._window
 

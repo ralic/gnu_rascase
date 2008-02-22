@@ -75,8 +75,28 @@ def start():
     ControlMainWindow()
 
 class ControlEntityComponent:
-    def __init__(self):
-        pass
+    def __init__(self, model):
+        """Construye un controlador para que gestione una instancia de EntityComponent (la vista)
+        y una instancia de Entity (modelo)
+
+        """
+        self._view = EntityComponent(model.get_x(),
+                                     model.get_y(),
+                                     model.get_linecolor(),
+                                     model.get_color())
+
+        for attribute in model.get_attributes():
+            view_attr = goocanvas.Table(can_focus = False)
+
+            txt = goocanvas.Text(parent=view_attr,
+                                 text=attribute.get_name())
+            view_attr.set_child_properties(txt, row=0, column=0)
+
+#            txt = goocanvas.Text(parent=view_attr,
+#                                 text=attribute.get_
+
+            self._view.add_attribute(view_attr)
+
 
 class ControlAttributeComponent:
     def __init__(self):
@@ -274,3 +294,6 @@ class ControlSaveFileDialog:
 
     def set_path(self, path):
         self._path = path
+
+if __name__=="__main__":
+    start()
