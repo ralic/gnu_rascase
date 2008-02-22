@@ -75,25 +75,34 @@ def start():
     ControlMainWindow()
 
 class ControlEntityComponent:
-    def __init__(self, model):
+    def __init__(self, entity_model):
         """Construye un controlador para que gestione una instancia de EntityComponent (la vista)
         y una instancia de Entity (modelo)
 
         """
-        self._view = EntityComponent(model.get_x(),
-                                     model.get_y(),
-                                     model.get_linecolor(),
-                                     model.get_color())
+        self._view = EntityComponent(entity_model.get_x(),
+                                     entity_model.get_y(),
+                                     entity_model.get_linecolor(),
+                                     entity_model.get_color())
 
-        for attribute in model.get_attributes():
+        for attribute in entity_model.get_attributes():
             view_attr = goocanvas.Table(can_focus = False)
 
+            if attribute.is_primary_key():
+                #make the text underlined
+                aux_attrname = "<u>" + attribute.get_name() + "</u>"
+            else:
+                aux_attrname = attribute.get_name()
+
             txt = goocanvas.Text(parent=view_attr,
-                                 text=attribute.get_name())
+                                 text=aux_attrname,
+                                 use_markup=True)
             view_attr.set_child_properties(txt, row=0, column=0)
 
-#            txt = goocanvas.Text(parent=view_attr,
-#                                 text=attribute.get_
+            txt = goocanvas.Text(parent=view_attr,
+                                 text=LogicalDataType.to_string(attribute.get_data_type),
+                                 use_markup=True)
+            view_attr.set_child_properties(txt, row=0, column=1)
 
             self._view.add_attribute(view_attr)
 
