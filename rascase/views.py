@@ -455,26 +455,6 @@ class LabelComponent(RectBaseComponent):
         RectBaseComponent._on_focus_in(self, item, target_item, event)
         print "foco in"
 
-class LineBaseComponent(goocanvas.Polyline):
-    def __init__(self, **kargs):
-        goocanvas.Polyline.__init__(self, **kargs)
-        self._line_width = None
-        self._line_color = None
-
-    def set_linewidth(self, value):
-        self.set_property("line-width", value)
-
-    def get_linewidth(self):
-        return self.get_property("line-width")
-
-    def set_linecolor(self, value):
-        self.set_property("stroke-color", value)
-
-    def get_linecolor(self):
-        return self.get_property("stroke-color")
-
-
-
 class EntityComponent(RectBaseComponent):
 
     def __init__(self, x, y, stroke_color, fill_color):
@@ -553,6 +533,24 @@ class AttributeComponent(goocanvas.Text):
     def get_mandatory (self) :
         pass
 
+class LineBaseComponent(goocanvas.Polyline):
+    def __init__(self, **kargs):
+        goocanvas.Polyline.__init__(self, **kargs)
+        self._line_width = None
+        self._line_color = None
+
+    def set_linewidth(self, value):
+        self.set_property("line-width", value)
+
+    def get_linewidth(self):
+        return self.get_property("line-width")
+
+    def set_linecolor(self, value):
+        self.set_property("stroke-color", value)
+
+    def get_linecolor(self):
+        return self.get_property("stroke-color")
+
 class RelationshipComponent(LineBaseComponent):
     def __init__(self, entity1, entity2):
         pass
@@ -597,6 +595,8 @@ class InheritanceComponent(LineBaseComponent):
 
     def on_entity_movement(self, item):
         pass
+
+#physical model components
 
 class TableComponent(RectBaseComponent):
     def __init__(self):
