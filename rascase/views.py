@@ -85,7 +85,11 @@ class RectBaseComponent(goocanvas.Group):
                                     fill_color_rgba=TANGO_COLOR_SKYBLUE_LIGHT,
                                     stroke_color="black",
                                     antialias=cairo.ANTIALIAS_SUBPIXEL)
-        self.translate(0, 0)
+
+        self._x = 0
+        self._y = 0
+        self.translate(self._x, self._y)
+
         self._dragging= False
         self.dragbox = {
             'NW': DragBox('NW',-5,-5),
@@ -110,20 +114,21 @@ class RectBaseComponent(goocanvas.Group):
         self.connect("motion_notify_event",self._on_motion)
 
     def set_x(self, x):
-        current_x = self.get_property("x")
-
-        self.translate(x-current_x,0)
+        self.translate(x-self._x,0)
 
     def get_x(self):
-        return self.get_property("x")
+        return self._x
 
     def set_y(self, y):
-        current_y = self.get_property("y")
-
-        self.translate(0, y-current_y)
+        self.translate(0, y-self._y)
 
     def get_y(self):
-        return self.get_property("y")
+        return self._y
+
+    def translate(self, diff_x, diff_y):
+        goocanvas.Group.translate(self, diff_x, diff_y)
+        self._x += diff_x
+        self._y += diff_y
 
     def set_width(self, width):
         self.set_property("width", width)
@@ -163,7 +168,7 @@ class RectBaseComponent(goocanvas.Group):
 
         if isinstance(color, str):
             self._body.set_property("fill-color", color)
-        elif isinstance(color, int):
+        elif isinstance(color, int) or isinstance(color, long):
             self._body.set_property("fill-color-rgba", color)
         else:
             log.debug("passing %s to set_linecolor", color)
@@ -173,6 +178,13 @@ class RectBaseComponent(goocanvas.Group):
 
     def get_body(self):
         return self._body
+
+    def get_bg(self):
+        if hasattr(self, "_bg"):
+            return self._bg
+        else:
+            return None
+
     #senales
     def _on_double_click_press(self,item,target,event):
         if event.type == gtk.gdk._2BUTTON_PRESS:
@@ -289,14 +301,21 @@ class DragBox(goocanvas.Rect):
 
         new_x = event.x
         new_y = event.y
+
+        body = item.get_parent().get_body()
+        bg = item.get_parent().get_bg()
+
         if item.name == 'N':
             dif = new_y - self.drag_y
             item.translate(0,dif)
 
-            item.get_parent().get_body().props.height = \
-                item.get_parent().get_body().props.height - dif
+            body.props.height = body.props.height - dif
+            body.translate(0,dif)
 
-            item.get_parent().get_body().translate(0,dif)
+            # this is trick to get a color behind a goocanvas.Table
+            if bg != None:
+                bg.props.height = bg.props.height - dif
+                bg.translate(0,dif)
 
             #make the dragbox follow the corners of the square
             item.get_parent().dragbox['NW'].translate (0,dif)
@@ -309,13 +328,14 @@ class DragBox(goocanvas.Rect):
             dif_y = new_y - self.drag_y
             item.translate(dif_x, dif_y)
 
-            item.get_parent().get_body().props.width = \
-                item.get_parent().get_body().props.width + dif_x
+            body.props.width = body.props.width + dif_x
+            body.props.height = body.props.height - dif_y
+            body.translate(0, dif_y)
 
-            item.get_parent().get_body().props.height = \
-                item.get_parent().get_body().props.height - dif_y
-
-            item.get_parent().get_body().translate(0, dif_y)
+            if bg != None:
+                bg.props.width = bg.props.width + dif_x
+                bg.props.height = bg.props.height - dif_y
+                bg.translate(0, dif_y)
 
             #make the dragbox follow the corner
             item.get_parent().dragbox['NW'].translate(0, dif_y)
@@ -327,8 +347,10 @@ class DragBox(goocanvas.Rect):
             dif = new_x - self.drag_x
             item.translate(dif,0)
 
-            item.get_parent().get_body().props.width = \
-                item.get_parent().get_body().props.width + dif
+            body.props.width = body.props.width + dif
+
+            if bg != None:
+                bg.props.width = body.props.width + dif
 
             #make the dragbox
             item.get_parent().dragbox['NE'].translate (dif, 0)
@@ -341,11 +363,12 @@ class DragBox(goocanvas.Rect):
             dif_y = new_y - self.drag_y
             item.translate(dif_x, dif_y)
 
-            item.get_parent().get_body().props.width = \
-                item.get_parent().get_body().props.width + dif_x
+            body.props.width = body.props.width + dif_x
+            body.props.height = body.props.height + dif_y
 
-            item.get_parent().get_body().props.height = \
-                item.get_parent().get_body().props.height + dif_y
+            if bg != None:
+                bg.props.width = bg.props.width + dif_x
+                bg.props.height = bg.props.height + dif_y
 
             #move the dragbox
             item.get_parent().dragbox['N'].translate (dif_x/2, 0)
@@ -359,8 +382,10 @@ class DragBox(goocanvas.Rect):
             dif = new_y - self.drag_y
             item.translate(0,dif)
 
-            item.get_parent().get_body().props.height = \
-                item.get_parent().get_body().props.height + dif
+            body.props.height = body.props.height + dif
+
+            if bg != None:
+                bg.props.height = bg.props.height + dif
 
             #move the dragbox
             item.get_parent().dragbox['W'].translate (0, dif/2)
@@ -373,13 +398,14 @@ class DragBox(goocanvas.Rect):
             dif_y = new_y - self.drag_y
             item.translate(dif_x,dif_y)
 
-            item.get_parent().get_body().props.height = \
-                item.get_parent().get_body().props.height + dif_y
+            body.props.height = body.props.height + dif_y
+            body.props.width = body.props.width - dif_x
+            body.translate(dif_x,0)
 
-            item.get_parent().get_body().props.width = \
-                item.get_parent().get_body().props.width - dif_x
-
-            item.get_parent().get_body().translate(dif_x,0)
+            if bg != None:
+                bg.props.height = bg.props.height + dif_y
+                bg.props.width = bg.props.width - dif_x
+                bg.translate(dif_x, 0)
 
             #move the dragbox
             item.get_parent().dragbox['N'].translate(dif_x/2, 0)
@@ -393,10 +419,12 @@ class DragBox(goocanvas.Rect):
             dif = new_x - self.drag_x
             item.translate(dif, 0)
 
-            item.get_parent().get_body().props.width = \
-                item.get_parent().get_body().props.width - dif
+            body.props.width = body.props.width - dif
+            body.translate(dif,0)
 
-            item.get_parent().get_body().translate(dif,0)
+            if bg != None:
+                bg.props.width = bg.props.width - dif
+                bg.translate(dif, 0)
 
             #move the dragbox
             item.get_parent().dragbox['N'].translate (dif/2, 0)
@@ -408,13 +436,15 @@ class DragBox(goocanvas.Rect):
             dif_x = new_x - self.drag_x
             dif_y = new_y - self.drag_y
             item.translate(dif_x,dif_y)
-            item.get_parent().get_body().props.height = \
-                item.get_parent().get_body().props.height - dif_y
 
-            item.get_parent().get_body().props.width = \
-                item.get_parent().get_body().props.width - dif_x
+            body.props.height = body.props.height - dif_y
+            body.props.width = body.props.width - dif_x
+            body.translate(dif_x,dif_y)
 
-            item.get_parent().get_body().translate(dif_x,dif_y)
+            if bg != None:
+                bg.props.height = bg.props.height - dif_y
+                bg.props.width = bg.props.width - dif_x
+                bg.translate(dif_x,dif_y)
 
             #move the dragbox
             item.get_parent().dragbox['E'].translate (0, dif_y/2)
@@ -438,12 +468,14 @@ class RectangleComponent(RectBaseComponent):
 class LabelComponent(RectBaseComponent):
     def __init__(self):
         RectBaseComponent.__init__(self)
+        # set the default color of the labels
+        # TODO: use gconf to let the preferences selected by the user modify this
         self.set_fillcolor(TANGO_COLOR_BUTTER_LIGHT)
 
         self._text = goocanvas.Text(parent=self,
                                     text="<b>Etiqueta</b>",
                                     use_markup=True,
-                                    font="DejaVu Sans normal 10") #the font need to be parametrized with gconf
+                                    font="DejaVu Sans normal 8") #the font need to be parametrized with gconf
 
     def set_text(self, text):
         self._text.set_property("text", text)
@@ -455,15 +487,52 @@ class LabelComponent(RectBaseComponent):
         RectBaseComponent._on_focus_in(self, item, target_item, event)
         print "foco in"
 
+    def set_font(self, font):
+        """Define la fuente que debe usar la instancia de LabelComponent
+
+        El parametro font es un string con el mismo formato que el constructor de pango.FontDescription"""
+        return self._text.set_property("font", font)
+
+    def get_font(self):
+        "Retorna la fuente que esta usando la instancia de LabelComponent"
+        return self._text.get_property("font")
+
 class EntityComponent(RectBaseComponent):
 
-    def __init__(self, x, y, stroke_color, fill_color):
-        #goocanvas.Group.__init__(self, can_focus = True)
+    def __init__(self, name, x=0, y=0):
         RectBaseComponent.__init__(self)
+        self._num_columns = 0
+        self._bg = self._body
+
+        ## pos = self.find_child(self._body)
+
+        ## if pos == -1:
+        ##     log.debug("The body of RectBaseComponent could not be found")
+        ##     raise RuntimeError
+
+        ## self.remove_child(pos)
+
+        self._body = goocanvas.Table(parent=self,
+                                     width=RectBaseComponent._ANCHO,
+                                     height=RectBaseComponent._ALTO,
+                                     column_spacing=5,
+                                     row_spacing=5,
+                                     fill_color="black",
+                                     homogeneous_rows=True)
+        #self.move_child(self.find_child(self._body), pos+1)
         self.set_x(x)
         self.set_y(y)
 
-        self._num_columns = 0
+        self._entity_title = goocanvas.Text(text="<b>" + str(name) + "</b>",
+                                            use_markup=True,
+                                            font="sans 8")
+
+        self._body.add_child(self._entity_title)
+        self._body.set_child_properties(self._entity_title,
+                                        row=self._num_columns,
+                                        column=0)
+        self._num_columns += 1
+
 
     def add_attribute(self,attribute):
         """Agrega un nuevo atributo a la entidad"""
