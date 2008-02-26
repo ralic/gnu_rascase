@@ -472,16 +472,16 @@ class LabelComponent(RectBaseComponent):
         # TODO: use gconf to let the preferences selected by the user modify this
         self.set_fillcolor(TANGO_COLOR_BUTTER_LIGHT)
 
-        self._text = goocanvas.Text(parent=self,
+        self._bg = goocanvas.Text(parent=self,
                                     text="<b>Etiqueta</b>",
                                     use_markup=True,
                                     font="DejaVu Sans normal 8") #the font need to be parametrized with gconf
 
     def set_text(self, text):
-        self._text.set_property("text", text)
+        self._bg.set_property("text", text)
 
     def get_text(self):
-        return self._text.get_property("text")
+        return self._bg.get_property("text")
 
     def _on_focus_in(self, item, target_item, event):
         RectBaseComponent._on_focus_in(self, item, target_item, event)
@@ -491,60 +491,97 @@ class LabelComponent(RectBaseComponent):
         """Define la fuente que debe usar la instancia de LabelComponent
 
         El parametro font es un string con el mismo formato que el constructor de pango.FontDescription"""
-        return self._text.set_property("font", font)
+        return self._bg.set_property("font", font)
 
     def get_font(self):
         "Retorna la fuente que esta usando la instancia de LabelComponent"
-        return self._text.get_property("font")
+        return self._bg.get_property("font")
 
 class EntityComponent(RectBaseComponent):
 
     def __init__(self, name, x=0, y=0):
         RectBaseComponent.__init__(self)
-        self._num_columns = 0
+        self._num_rows = 0
         self._bg = self._body
 
-        ## pos = self.find_child(self._body)
-
-        ## if pos == -1:
-        ##     log.debug("The body of RectBaseComponent could not be found")
-        ##     raise RuntimeError
-
-        ## self.remove_child(pos)
-
-        self._body = goocanvas.Table(parent=self,
-                                     width=RectBaseComponent._ANCHO,
-                                     height=RectBaseComponent._ALTO,
-                                     column_spacing=5,
-                                     row_spacing=5,
-                                     fill_color="black",
-                                     homogeneous_rows=True)
-        #self.move_child(self.find_child(self._body), pos+1)
         self.set_x(x)
         self.set_y(y)
 
+        # this table is the top level table of the EntityComponent
+        # only contains the entity name, line separator, attributes table
+        self._toptable = goocanvas.Table(parent=self,
+                                         width=RectBaseComponent._ANCHO,
+                                         height=RectBaseComponent._ALTO,
+                                         column_spacing=5,
+                                         row_spacing=2,
+                                         fill_color="black")
+
+        # the title of the entity
         self._entity_title = goocanvas.Text(text="<b>" + str(name) + "</b>",
                                             use_markup=True,
                                             font="sans 8")
 
-        self._body.add_child(self._entity_title)
-        self._body.set_child_properties(self._entity_title,
-                                        row=self._num_columns,
-                                        column=0)
-        self._num_columns += 1
+        self._toptable.add_child(self._entity_title)
+        self._toptable.set_child_properties(self._entity_title,
+                                            row=0,
+                                            column=0,
+                                            x_align=0.5,
+                                            top_padding=5,
+                                            left_padding=5)
 
+        #line to use like separator between the entity name and the attributes
+        self._line = goocanvas.polyline_new_line(self._toptable,
+                                                 x1=1,y1=1,
+                                                 x2=100, y2=1,
+                                                 stroke_color="black",
+                                                 line_width=1)
+
+        self._toptable.set_child_properties(self._line,
+                                            row=1,
+                                            column=0)
+
+        # this table must contain the attributes
+        self._body = goocanvas.Table(width=RectBaseComponent._ANCHO,
+                                     height=RectBaseComponent._ALTO,
+                                     column_spacing=5,
+                                     row_spacing=2,
+                                     fill_color="black")
+
+        self._toptable.add_child(self._body)
+        self._toptable.set_child_properties(self._body,
+                                            row=2,
+                                            column=0,
+                                            x_align=0.0,
+                                            top_padding=5)
 
     def add_attribute(self,attribute):
         """Agrega un nuevo atributo a la entidad"""
 
-        self._body.add_child(attribute)
-        self._body.set_child_properties(attribute,
-                                        row=self._num_columns,
+        self._body.add_child(attribute.items['name'])
+        self._body.set_child_properties(attribute.items['name'],
+                                        row=self._num_rows,
                                         column=0,
+                                        x_align=0.0,
+                                        left_padding=5)
+
+        self._body.add_child(attribute.items['mandatory'])
+        self._body.set_child_properties(attribute.items['mandatory'],
+                                        row=self._num_rows,
+                                        column=1,
+                                        x_align=0.5)
+
+        self._body.add_child(attribute.items['datatype'])
+        self._body.set_child_properties(attribute.items['datatype'],
+                                        row=self._num_rows,
+                                        column=2,
                                         x_align=0.0)
-        print "numero de columnas", self._num_columns
-        self._num_columns += 1
+
+        print "numero de columnas", self._num_rows
+        self._num_rows += 1
         self.request_update()
+        print "ancho M: ", attribute.items['mandatory'].get_property("width")
+        print "ancho Name: ", attribute.items['name'].get_property("width")
+
 
     def get_icon_path(cls):
 
@@ -562,63 +599,137 @@ class EntityComponent(RectBaseComponent):
 
 class AttributeComponent(goocanvas.Text):
     """Componente gráfico que se pone dentro de una entidad"""
-    def __init__(self, name):
-        self.default_value = None #
-        self.mandatory = False #
-        self.primary_key = False #
-        self.data_type = None #
-        text = name + "\t"
-        if self.mandatory:
-            text = text + "True"
+    def __init__(self, name, datatype, default_value=None, pk=False, mandatory=False):
+
+        self._name = name
+        self._default_value = default_value
+        self._mandatory = mandatory
+        self._primary_key = pk
+        self._data_type = datatype[0]
+        if len(datatype) > 1:
+            self._data_type_length = datatype[1]
         else:
-            text = text + "False"
-        goocanvas.Text.__init__(self, text=text,
-				anchor=gtk.ANCHOR_SE,
-				can_focus = False)
+            self._data_type_length = None
+
+        ## goocanvas.Text.__init__(self, text=self._build_text(),
+        ##                         use_markup=True,
+	## 			anchor=gtk.ANCHOR_SE,
+	## 			can_focus = False,
+        ##                         font="mono 8")
+        if self._mandatory:
+            text_m = "[M]"
+        else:
+            text_m = ""
+
+        if self._primary_key:
+            text_name = "<u>" + self._name + "</u>"
+        else:
+            text_name = self._name
+
+        #FIXME: this should not happen, the controller must do this
+        from rascase.core import LogicalDataType
+        text_dt = LogicalDataType.to_string(self._data_type)
+        if isinstance(self._data_type_length, int):
+            text_dt = text_dt + "(" + str(self._data_type_length) + ")"
+
+        self.items = {'mandatory':goocanvas.Text(text=text_m, use_markup=True, font="sans 8"),
+                      'name':goocanvas.Text(text=text_name, use_markup=True, font="sans 8"),
+                      'datatype':goocanvas.Text(text=text_dt, use_markup=True, font="sans 8")
+                      }
 
     def refresh(self):
-        pass
+        if self._mandatory:
+            text_m = "[M]"
+        else:
+            text_m = ""
+
+        if self._primary_key:
+            text_name = "<u>" + self._name + "</u>"
+        else:
+            text_name = self._name
+
+        #FIXME: this should not happen, the controller must do this
+        from rascase.core import LogicalDataType
+        text_dt = LogicalDataType.to_string(self._data_type)
+        if isinstance(self._data_type_length, int):
+            text_dt = text_dt + "(" + str(self._data_type_length) + ")"
+
+        self.items['mandatory'].set_property("text", text_m)
+        self.items['name'].set_property("text", text_name)
+        self.items['datatype'].set_property("text", text_dt)
 
     def set_primary_key (self, valor) :
-        pass
+        self._primary_key = valor
 
     def get_primary_key (self) :
-        pass
+        return self._primary_key
 
     def set_default_value (self, value) :
-        pass
+        self._default_value = value
 
     def get_default_value (self) :
-        pass
-    def set_data_type (self, datatype) :
-        pass
+        return self._default_value
+
+    def set_data_type (self, datatype):
+        """Define el tipo de dato del atributo, datatype es una tuple() de uno o dos elementos,
+        el primer elemento es el tipo de dato y el segundo elemento (opcional) es un entero
+        que representa el largo del tipo de dato.
+
+        Por ejemplo datatype=(LogicalDataType.VARCHAR, 10) representa un varchar de largo 10
+        """
+        self._data_type = datatype[0]
+
+        if len(datatype) > 1:
+            self._data_type_length = datatype[1]
+        else:
+            self._data_type_length = None
 
     def get_data_type (self) :
-        pass
+        if self._data_type_length != None:
+            return (self._data_type, self._data_type_length)
+        else:
+            return (self._data_type,)
 
     def set_mandatory (self, mandatory) :
-        pass
+        self._mandatory = mandatory
 
     def get_mandatory (self) :
-        pass
+        return self._mandatory
+
 
 class LineBaseComponent(goocanvas.Polyline):
     def __init__(self, **kargs):
         goocanvas.Polyline.__init__(self, **kargs)
-        self._line_width = None
-        self._line_color = None
+
+        if "line_width" in kargs.keys():
+            self._line_width = kargs["line_width"]
+        else:
+            self._line_width = None
+
+        if "line_color" in kargs.keys():
+            self._line_color = kargs["line_color"]
+        else:
+            self._line_color = int("000000",16)
+
 
     def set_linewidth(self, value):
         self.set_property("line-width", value)
+        self._line_width = value
 
     def get_linewidth(self):
-        return self.get_property("line-width")
+        return self._line_width
 
     def set_linecolor(self, value):
-        self.set_property("stroke-color", value)
+
+        if isinstance(value,str):
+            self.set_property("stroke-color", value)
+        else:
+            self.set_property("stroke-color-rgba", value)
+
+        self._line_color = value
 
     def get_linecolor(self):
-        return self.get_property("stroke-color")
+        return self._line_color
 
 class RelationshipComponent(LineBaseComponent):
     def __init__(self, entity1, entity2):
