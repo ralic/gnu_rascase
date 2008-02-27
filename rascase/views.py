@@ -806,52 +806,115 @@ class RelationshipComponent(LineBaseComponent):
         return pts
 
     def set_cardinality(self, type_):
-        pass
+        self._cardinality = type_
 
     def get_cardinality(self):
-        pass
+        return self._cardinality
 
     def set_entity1(self, entity):
-        pass
+        self._entity1 = entity
 
     def get_entity1(self):
-        pass
+        return self._entity1
 
     def set_entity2(self, entity):
-        pass
+        self._entity2 = entity
 
     def get_entity2(self):
-        pass
+        return self._entity2
 
     def _on_entity_movement(self, item):
+        "Este metodo es ejecutado cada vez que alguna de las entidades de la relacion emite la señal 'on-movement'"
         self.set_property("points", self._build_points())
 
 class InheritanceComponent(LineBaseComponent):
-    def __init__(self, father, son):
+    def __init__(self, father, son, **kargs):
+
         self._father = father
         self._son = son
+        LineBaseComponent.__init__(self,
+                                   points=self._build_points(),
+                                   stroke_color="green")
+
+        self._father.connect("on-movement", self._on_entity_movement)
+        self._son.connect("on-movement", self._on_entity_movement)
+
+    def _build_points(self):
+        points_list = list()
+
+        if self._father.get_x() < self._son.get_x():
+            x1 = self._father.get_x() + self._father.get_width()
+            x2 = self._son.get_x()
+        else:
+            x1 = self._father.get_x()# - self._father.get_width()
+            x2 = self._son.get_x() + self._son.get_width()
+
+        y1 = self._father.get_y() + self._father.get_height()/2
+        y2 = self._son.get_y() + self._son.get_height()/2
+
+        points_list.append((x1,y1))
+
+        if self._father.get_x() < self._son.get_x():
+            p1 = (x2-15, y2)
+            points_list.append(p1)
+
+            p2 = (p1[0] + 5, p1[1])
+            points_list.append(p2)
+
+            p3 = (p2[0], p2[1] - 10)
+            points_list.append(p3)
+
+            p4 = (p3[0] + 10, p3[1] + 10)
+            points_list.append(p4)
+
+            p5 = (p4[0] - 10, p4[1] + 10)
+            points_list.append(p5)
+
+            points_list.append(p2)
+        else:
+            p1 = (x2 + 15, y2)
+            points_list.append(p1)
+
+            p2 = (p1[0] - 5, p1[1])
+            points_list.append(p2)
+
+            p3 = (p2[0], p2[1] - 10)
+            points_list.append(p3)
+
+            p4 = (p3[0] - 10, p3[1] + 10)
+            points_list.append(p4)
+
+            p5 = (p4[0] + 10, p4[1] + 10)
+            points_list.append(p5)
+
+            points_list.append(p2)
+
+        #points_list.append((x2,y2))
+
+        pts = goocanvas.Points(points_list)
+
+        return pts
 
     def set_father(self, father):
-        pass
+        self._father = father
 
     def get_father(self):
-        pass
+        return self._father
 
     def set_son(self, son):
-        pass
+        self._son = son
 
     def get_son(self):
-        pass
+        return self._son
 
-    def on_entity_movement(self, item):
-        pass
+    def _on_entity_movement(self, item):
+        self.set_property("points", self._build_points())
 
 #physical model components
 
 class TableComponent(RectBaseComponent):
     def __init__(self):
         RectBaseComponent.__init__(self)
-
 
 class ReferenceComponent(LineBaseComponent):
     def __init__(self):
