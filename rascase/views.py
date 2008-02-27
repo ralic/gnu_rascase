@@ -66,6 +66,9 @@ TANGO_COLOR_ALUMINIUM2_DARK = int("2e3436ff",16)
 TRANSPARENT_COLOR = int("000000",16)
 
 class RectBaseComponent(goocanvas.Group):
+    __gsignals__ = {
+        'on-movement': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+        }
 
     #some constants that probably must be deleted :P
     _ANCHO = 100
@@ -134,13 +137,13 @@ class RectBaseComponent(goocanvas.Group):
         self.set_property("width", width)
 
     def get_width(self):
-        return self.get_property("width")
+        return self._body.get_property("width")
 
     def set_height(self, height):
         self.set_property("height", height)
 
     def get_height(self):
-        return self.get_property("height")
+        return self._body.get_property("height")
 
     def set_linecolor(self, color):
 
@@ -240,6 +243,7 @@ class RectBaseComponent(goocanvas.Group):
         new_x = event.x
         new_y = event.y
         item.translate (new_x - self.drag_x, new_y - self.drag_y)
+        self.emit("on-movement")
 
 class DragBox(goocanvas.Rect):
 
@@ -530,11 +534,11 @@ class EntityComponent(RectBaseComponent):
                                             left_padding=5)
 
         #line to use like separator between the entity name and the attributes
-        self._line = goocanvas.polyline_new_line(self._toptable,
-                                                 x1=1,y1=1,
-                                                 x2=100, y2=1,
-                                                 stroke_color="black",
-                                                 line_width=1)
+        pts = goocanvas.Points([(1,1),(100,1)])
+        self._line = goocanvas.Polyline(parent=self._toptable,
+                                        points=pts,
+                                        stroke_color="black",
+                                        line_width=1)
 
         self._toptable.set_child_properties(self._line,
                                             row=1,
@@ -576,12 +580,8 @@ class EntityComponent(RectBaseComponent):
                                         column=2,
                                         x_align=0.0)
 
-        print "numero de columnas", self._num_rows
         self._num_rows += 1
         self.request_update()
-        print "ancho M: ", attribute.items['mandatory'].get_property("width")
-        print "ancho Name: ", attribute.items['name'].get_property("width")
-
 
     def get_icon_path(cls):
 
@@ -711,7 +711,6 @@ class LineBaseComponent(goocanvas.Polyline):
         else:
             self._line_color = int("000000",16)
 
-
     def set_linewidth(self, value):
         self.set_property("line-width", value)
         self._line_width = value
@@ -732,8 +731,79 @@ class LineBaseComponent(goocanvas.Polyline):
         return self._line_color
 
 class RelationshipComponent(LineBaseComponent):
-    def __init__(self, entity1, entity2):
-        pass
+    def __init__(self, entity1, entity2, cardinality, dependent):
+
+        self._cardinality = cardinality
+        self._dependent = dependent
+        self._entity1 = entity1
+        self._entity2 = entity2
+
+        self._entity1.connect("on-movement",self._on_entity_movement)
+        self._entity2.connect("on-movement",self._on_entity_movement)
+
+        LineBaseComponent.__init__(self,points=self._build_points(),
+                                   stroke_color="black")
+
+
+    def _build_points(self):
+
+        points_list = list()
+
+        if self._entity1.get_x() < self._entity2.get_x():
+            x1 = self._entity1.get_x() + self._entity1.get_width()
+            x2 = self._entity2.get_x()
+        else:
+            x1 = self._entity1.get_x()# - self._entity1.get_width()
+            x2 = self._entity2.get_x() + self._entity2.get_width()
+
+        y1 = self._entity1.get_y() + self._entity1.get_height()/2
+        y2 = self._entity2.get_y() + self._entity2.get_height()/2
+
+        points_list.append((x1,y1))
+
+        from rascase.core import Relationship
+
+        # TODO: hacer que las lineas varien segun la configuracion de la relacion
+        #if self.cardinality == Relationship.CARDINALITY_
+
+        if self._entity1.get_x() < self._entity2.get_x():
+            p1 = (x2-25, y2)
+            points_list.append(p1)
+
+            p2 = (p1[0] + 5, p1[1])
+            points_list.append(p2)
+
+            p3 = (p2[0] + 10, p2[1] - 10)
+            points_list.append(p3)
+
+            p4 = (p3[0], p3[1] + 20)
+            points_list.append(p4)
+
+            p5 = (p2[0], p2[1])
+            points_list.append(p5)
+        else:
+            p1 = (x2+25, y2)
+            points_list.append(p1)
+
+            p2 = (p1[0] - 5, p1[1])
+            points_list.append(p2)
+
+            p3 = (p2[0] - 10, p2[1] - 10)
+            points_list.append(p3)
+
+            p4 = (p3[0], p3[1] + 20)
+            points_list.append(p4)
+
+            p5 = (p2[0], p2[1])
+            points_list.append(p5)
+
+        points_list.append((x2,y2))
+        ## p2_x = p1_x + 10
+        ## p2_y = (y2-y1-x2+x1)/(y2-y1+x2-x1)*(p2_x-p1_x)+p1_y
+
+        pts = goocanvas.Points(points_list)
+
+        return pts
 
     def set_cardinality(self, type_):
         pass
@@ -753,8 +823,8 @@ class RelationshipComponent(LineBaseComponent):
     def get_entity2(self):
         pass
 
-    def on_entity_movement(self, item):
-        pass
+    def _on_entity_movement(self, item):
+        self.set_property("points", self._build_points())
 
 class InheritanceComponent(LineBaseComponent):
     def __init__(self, father, son):
