@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.4.0 on Tue Dec 18 19:00:15 2007 -->
+<!--Generated with glade3 3.4.1 on Wed Feb 27 16:42:31 2008 -->
 <glade-interface>
   <widget class="GtkWindow" id="wndeditentity">
     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+    <property name="window_position">GTK_WIN_POS_CENTER_ON_PARENT</property>
+    <property name="destroy_with_parent">True</property>
     <child>
       <widget class="GtkVBox" id="vbox11">
         <property name="visible">True</property>
@@ -19,6 +21,7 @@
                 <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                 <property name="n_rows">3</property>
                 <property name="n_columns">2</property>
+                <property name="row_spacing">5</property>
                 <child>
                   <widget class="GtkLabel" id="label25">
                     <property name="visible">True</property>
@@ -55,7 +58,7 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkEntry" id="entry7">
+                  <widget class="GtkEntry" id="entry_name">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
@@ -67,7 +70,7 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkEntry" id="entry8">
+                  <widget class="GtkEntry" id="entry_codename">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
@@ -81,10 +84,20 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkTextView" id="txt_description">
+                  <widget class="GtkScrolledWindow" id="scrolledwindow1">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                    <property name="hscrollbar_policy">GTK_POLICY_NEVER</property>
+                    <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+                    <child>
+                      <widget class="GtkTextView" id="txt_description">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                        <property name="wrap_mode">GTK_WRAP_WORD_CHAR</property>
+                      </widget>
+                    </child>
                   </widget>
                   <packing>
                     <property name="left_attach">1</property>
@@ -116,17 +129,18 @@
                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                     <property name="icon_size">GTK_ICON_SIZE_SMALL_TOOLBAR</property>
                     <child>
-                      <widget class="GtkToolButton" id="toolbutton15">
+                      <widget class="GtkToolButton" id="new_attr">
                         <property name="visible">True</property>
                         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                         <property name="stock_id">gtk-new</property>
+                        <signal name="clicked" handler="on_new_attr_clicked"/>
                       </widget>
                       <packing>
                         <property name="expand">False</property>
                       </packing>
                     </child>
                     <child>
-                      <widget class="GtkToolButton" id="toolbutton16">
+                      <widget class="GtkToolButton" id="copy_attr">
                         <property name="visible">True</property>
                         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                         <property name="stock_id">gtk-copy</property>
@@ -136,7 +150,7 @@
                       </packing>
                     </child>
                     <child>
-                      <widget class="GtkToolButton" id="toolbutton17">
+                      <widget class="GtkToolButton" id="cut_attr">
                         <property name="visible">True</property>
                         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                         <property name="stock_id">gtk-cut</property>
@@ -146,7 +160,7 @@
                       </packing>
                     </child>
                     <child>
-                      <widget class="GtkToolButton" id="toolbutton18">
+                      <widget class="GtkToolButton" id="del_attr">
                         <property name="visible">True</property>
                         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                         <property name="stock_id">gtk-delete</property>
@@ -196,7 +210,7 @@
             <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
             <property name="spacing">5</property>
             <child>
-              <widget class="GtkButton" id="button22">
+              <widget class="GtkButton" id="btn_help">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -211,7 +225,7 @@
               </packing>
             </child>
             <child>
-              <widget class="GtkButton" id="button23">
+              <widget class="GtkButton" id="btn_cancel">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -219,6 +233,7 @@
                 <property name="label" translatable="yes">gtk-cancel</property>
                 <property name="use_stock">True</property>
                 <property name="response_id">0</property>
+                <signal name="clicked" handler="on_btn_cancel_clicked"/>
               </widget>
               <packing>
                 <property name="expand">False</property>
@@ -228,7 +243,7 @@
               </packing>
             </child>
             <child>
-              <widget class="GtkButton" id="button24">
+              <widget class="GtkButton" id="btn_ok">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -236,6 +251,7 @@
                 <property name="label" translatable="yes">gtk-ok</property>
                 <property name="use_stock">True</property>
                 <property name="response_id">0</property>
+                <signal name="clicked" handler="on_btn_ok_clicked"/>
               </widget>
               <packing>
                 <property name="expand">False</property>

@@ -100,8 +100,11 @@ class LogicalBase:
     def get_codename(self):
         return self._codename
 
-    def set_codename(self, value):
-        self._codename = value
+    def set_codename(self, codename):
+        aux = str(codename)
+        aux = aux.upper()
+        aux = aux.replace(' ', '_')
+        self._codename = aux
 
     def get_description(self):
         return self._description
@@ -549,8 +552,11 @@ class Entity(LogicalBase, RectBase):
             self.set_fillcolor(xmlnode.getAttributeNS(XML_URI, "fillcolor"))
 
         else: # TODO: terminar de definir las opciones por defecto
+            config = ConfigurationManager()
+            self.set_fillcolor(config.get_entity_color())
             self.set_name("Entidad "+str(Entity.counter))
             self.set_codename("ENTIDAD_"+str(Entity.counter))
+            self.set_description("Sin descripción")
             Entity.counter += 1
 
     def add_attribute(self, attribute):
@@ -605,6 +611,8 @@ class Entity(LogicalBase, RectBase):
         return self._attributes_list
 
 class Attribute(LogicalBase):
+    counter = int(0)
+
     def __init__(self, xmlnode=None):
         log.debug("Constructing an Attribute")
         LogicalBase.__init__(self)
@@ -625,6 +633,13 @@ class Attribute(LogicalBase):
                                                             "datatypelength")
             self.set_default_value(xmlnode.getAttributeNS(XML_URI, "defaultvalue"))
             self.set_mandatory(xmlnode.getAttributeNS(XML_URI, "mandatory"))
+
+        else:
+            self.set_name("Atributo " + str(Attribute.counter))
+            self.set_codename("ATRIBUTO_"+str(Attribute.counter))
+            self.set_description("Sin descripción")
+
+            Attribute.counter += 1
 
 
 
@@ -656,9 +671,14 @@ class Attribute(LogicalBase):
         # y solamente setearla cuando corresponde
         if length != None:
             self._data_type_length = str(length)
+        else:
+            self._data_type_length = None
 
     def get_data_type(self):
-        return self._data_type
+        if self._data_type_length != None:
+            return (self._data_type,self._data_type_length)
+        else:
+            return (self._data_type,)
 
     def set_mandatory(self, value):
         self._mandatory = bool(value)
@@ -859,6 +879,28 @@ class LogicalDataType:
     TIMESTAMP = 13
     INTERVAL = 14
 
+    def get_data_types(cls):
+        l = list()
+        l.append(LogicalDataType.CHARACTER)
+        l.append(LogicalDataType.VARCHAR)
+        l.append(LogicalDataType.BIT)
+        l.append(LogicalDataType.VARBIT)
+        l.append(LogicalDataType.NUMERIC)
+        l.append(LogicalDataType.DECIMAL)
+        l.append(LogicalDataType.INTEGER)
+        l.append(LogicalDataType.SMALLINT)
+        l.append(LogicalDataType.FLOAT)
+        l.append(LogicalDataType.REAL)
+        l.append(LogicalDataType.DOUBLE)
+        l.append(LogicalDataType.DATE)
+        l.append(LogicalDataType.TIME)
+        l.append(LogicalDataType.TIMESTAMP)
+        l.append(LogicalDataType.INTERVAL)
+
+        return l
+
+    get_data_types = classmethod(get_data_types)
+
     def to_string(cls, type_):
         if type_==LogicalDataType.CHARACTER:
             return "CHARACTER"
@@ -1058,7 +1100,10 @@ class PhysicalBase:
         return self._name
 
     def set_codename(self, codename):
-        self._codename = str(codename)
+        aux = str(codename)
+        aux = aux.upper()
+        aux = aux.replace(' ', '_')
+        self._codename = aux
 
     def get_codename(self):
         return self._codename

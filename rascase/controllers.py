@@ -54,7 +54,8 @@ def start():
     # http://docs.python.org/lib/multiple-destinations.html example
     # set up logging to file - see previous section for more details
     logging.basicConfig(level=logging.DEBUG,
-                        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                        #format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                        format='%(levelname)-8s %(message)s',
                         datefmt='%m-%d %H:%M')
     # define a Handler which writes INFO messages or higher to the sys.stderr
     console = logging.StreamHandler()
@@ -74,42 +75,62 @@ def start():
 
     ControlMainWindow()
 
+log = logging.getLogger('controllers')
+
 class ControlEntityComponent:
     def __init__(self, entity_model):
         """Construye un controlador para que gestione una instancia de EntityComponent (la vista)
         y una instancia de Entity (modelo)
 
         """
-        self._view = EntityComponent(entity_model.get_x(),
-                                     entity_model.get_y(),
-                                     entity_model.get_linecolor(),
-                                     entity_model.get_color())
+        log.debug("Constructing a ControlEntityComponent")
+
+        self._entity_model = entity_model
+        self._view = EntityComponent(entity_model.get_name(),
+                                     entity_model.get_x(),
+                                     entity_model.get_y())
+
+        self._view.set_fillcolor(entity_model.get_fillcolor())
 
         for attribute in entity_model.get_attributes():
-            view_attr = goocanvas.Table(can_focus = False)
+            aux_dt = (LogicalDataType.to_string(attribute.get_data_type()),)
 
-            if attribute.is_primary_key():
-                #make the text underlined
-                aux_attrname = "<u>" + attribute.get_name() + "</u>"
-            else:
-                aux_attrname = attribute.get_name()
-
-            txt = goocanvas.Text(parent=view_attr,
-                                 text=aux_attrname,
-                                 use_markup=True)
-            view_attr.set_child_properties(txt, row=0, column=0)
-
-            txt = goocanvas.Text(parent=view_attr,
-                                 text=LogicalDataType.to_string(attribute.get_data_type),
-                                 use_markup=True)
-            view_attr.set_child_properties(txt, row=0, column=1)
+            view_attr = AttributeComponent(name=attribute.get_name(),
+                                           datatype=aux_dt,
+                                           default_value=attribute.get_default_value(),
+                                           pk=attribute.is_primary_key(),
+                                           mandatory=attribute.is_mandatory())
 
             self._view.add_attribute(view_attr)
 
+        self._view.connect("on-double-click", self._on_edit_selected)
 
-class ControlAttributeComponent:
-    def __init__(self):
-        pass
+    def add_attribute(self, attribute_model=None):
+        if attribute_model == None:
+            attr = Attribute()
+        else:
+            attr = attribute_model
+
+        self._entity_model.add_attribute(attr)
+
+        attr_comp = AttributeComponent(attr.get_name(),
+                                         attr.get_codename(),
+                                         attr.get_default_value(),
+                                         attr.is_primary_key(),
+                                         attr.is_mandatory())
+
+        self._view.add_attribute(attr_comp)
+
+        return attr
+
+    def _on_edit_selected(self,item):
+        "Este metodo es llamado por la vista cuando el usuario seleccionar editar la entidad"
+
+        parent = item.get_canvas().get_toplevel()
+        ControlEditEntity(self._entity_model, control=self, parent=parent)
+
+    def refresh(self):
+        self._view.refresh()
 
 class ControlRelationshipComponent:
     def __init__(self):
@@ -136,11 +157,22 @@ class ControlLabelComponent:
         pass
 
 class ControlEditEntity:
-    def __init__(self, entity):
+    def __init__(self, entity, control, parent):
         self._entity = entity
+        self._control = control
 
-    def save(self):
-        pass
+        self._view = ViewEditEntity(self._entity, self, parent=parent)
+
+    def get_new_attribute(self):
+        attr = self._control.add_attribute()
+        return attr
+
+    def logical_data_type_to_string(self, datatype):
+        return LogicalDataType.to_string(datatype)
+
+    def refresh(self):
+        self._control.refresh()
+
 
 class ControlEditLabel:
     def __init__(self, label):
@@ -221,8 +253,11 @@ class ControlMainWindow:
     def close_model(self, model):
         pass
 
-    def add_entity(self, model, x, y):
-        pass
+    def add_entity(self, x, y):
+        entity_model = Entity()
+        entity_control = ControlEntityComponent(entity_model)
+
+        return entity_control._view
 
     def add_relationship(self, model, entity1, entity2):
         pass

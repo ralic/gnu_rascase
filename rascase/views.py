@@ -67,7 +67,8 @@ TRANSPARENT_COLOR = int("000000",16)
 
 class RectBaseComponent(goocanvas.Group):
     __gsignals__ = {
-        'on-movement': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+        'on-movement': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'on-double-click': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
         }
 
     #some constants that probably must be deleted :P
@@ -172,6 +173,7 @@ class RectBaseComponent(goocanvas.Group):
         if isinstance(color, str):
             self._body.set_property("fill-color", color)
         elif isinstance(color, int) or isinstance(color, long):
+            print "color: ", color
             self._body.set_property("fill-color-rgba", color)
         else:
             log.debug("passing %s to set_linecolor", color)
@@ -191,8 +193,7 @@ class RectBaseComponent(goocanvas.Group):
     #senales
     def _on_double_click_press(self,item,target,event):
         if event.type == gtk.gdk._2BUTTON_PRESS:
-            print "*** se hizo doble click", type(target)
-
+            self.emit("on-double-click")
 
     def _on_focus_in (self, item, target_item, event):
         for aux in self.dragbox.keys():
@@ -583,6 +584,19 @@ class EntityComponent(RectBaseComponent):
         self._num_rows += 1
         self.request_update()
 
+
+    def set_fillcolor(self, color):
+
+        self._fillcolor = color
+
+        if isinstance(color, str):
+            self._bg.set_property("fill-color", color)
+        elif isinstance(color, int) or isinstance(color, long):
+            self._bg.set_property("fill-color-rgba", color)
+        else:
+            log.debug("passing %s to set_linecolor", color)
+
+
     def get_icon_path(cls):
 
         filename = resource_filename('rascase.resources.pixmaps', 'entity-icon.png')
@@ -923,7 +937,7 @@ class ReferenceComponent(LineBaseComponent):
 
 
 class Canvas(goocanvas.Canvas):
-    "Esta clase configura el canvas que provee goocanvas"
+    "Esta clase configura el canvas que provee goocanvas.Canvas"
 
     def __init__(self, **kargs):
         goocanvas.Canvas.__init__(self, **kargs)
@@ -932,8 +946,8 @@ class Canvas(goocanvas.Canvas):
         self.scrolled_win.show()
 
         self.set_flags(gtk.CAN_FOCUS)
-        self.set_size_request(300, 300)
-        self.set_bounds(0, 0, 600, 600)
+        self.set_size_request(640, 480)
+        self.set_bounds(0, 0, 800, 700)
         root = self.get_root_item()
         self.set_root_item(root)
         self.show()
@@ -944,13 +958,213 @@ class Canvas(goocanvas.Canvas):
         self.get_root_item().add_child(item)
 
 class ViewEditEntity:
-    def __init__(self, entity, control):
-        self._window = None
+    def __init__(self, entity, control, parent):
+
         self._control = control
         self._entity = entity
 
+        glade_file = resource_filename("rascase.resources.glade", "wndeditentity.glade")
+        self._wTree = gtk.glade.XML(glade_file)
+
+        signals_dic = {"on_btn_ok_clicked":self._on_btn_ok_clicked,
+                       "on_btn_cancel_clicked":self._on_btn_cancel_clicked,
+                       "on_new_attr_clicked":self._on_new_attr_clicked}
+
+        self._wTree.signal_autoconnect(signals_dic)
+        self._window = self._wTree.get_widget("wndeditentity")
+        self._window.set_transient_for(parent)
+
+        ## main information
+        widget = self._wTree.get_widget("entry_name")
+        widget.set_text(entity.get_name())
+
+        widget = self._wTree.get_widget("entry_codename")
+        widget.set_text(entity.get_codename())
+
+        widget = self._wTree.get_widget("txt_description")
+        buff = widget.get_buffer()
+        buff.set_text(entity.get_description())
+
+        ## attributes
+        tree_attributes = self._wTree.get_widget("tree_attributes")
+
+        self._attr_list = gtk.ListStore(gobject.TYPE_STRING, #0 name
+                                        gobject.TYPE_STRING, #1 codename
+                                        gobject.TYPE_INT,    #2 datatype constant
+                                        gobject.TYPE_STRING, #3 datatype string
+                                        gobject.TYPE_OBJECT, #4 all data_types
+                                        gobject.TYPE_INT,    #5 data_type_length
+                                        gobject.TYPE_BOOLEAN,#6 pk
+                                        gobject.TYPE_BOOLEAN,#7 mandatory
+                                        gobject.TYPE_STRING, #8 description
+                                        object)              #9 el atributo
+
+        self._datatypes_store = gtk.ListStore(gobject.TYPE_STRING,
+                                              gobject.TYPE_INT)
+        from rascase.core import LogicalDataType
+        for dt in LogicalDataType.get_data_types():
+            self._datatypes_store.append([LogicalDataType.to_string(dt), dt])
+
+        for attr in self._entity.get_attributes():
+
+            if len(attr.get_data_type()) > 1:
+                dt_length = attr.get_data_type()[1]
+            else:
+                dt_length = 0
+
+            self._attr_list.append([attr.get_name(),
+                                    attr.get_codename(),
+                                    attr.get_data_type()[0],
+                                    LogicalDataType.to_string(attr.get_data_type()),
+                                    self._datatypes_store,
+                                    dt_length,
+                                    attr.is_primary_key(),
+                                    attr.is_mandatory(),
+                                    attr.get_description()])
+
+        ############## datos de prueba
+        self._attr_list.append(["rut","RUT",6, "INTEGER",self._datatypes_store, 0, True, True, "descripcion",None])
+        self._attr_list.append(["nombre","NOMBRE",1, "VARCHAR",self._datatypes_store, 0, False, True, "descripcion",None])
+        self._attr_list.append(["apellido p","APELLIDO_P",1, "VARCHAR",self._datatypes_store, 0, False, True, "descripcion",None])
+        self._attr_list.append(["direccion","DIRECCION",1, "VARCHAR",self._datatypes_store, 0, False, False, "descripcion",None])
+        ##############
+
+        tree_attributes.set_model(self._attr_list)
+
+        # column name
+        col_name = gtk.TreeViewColumn("Nombre")
+        tree_attributes.append_column(col_name)
+        cell = gtk.CellRendererText()
+        cell.set_property("editable", True)
+        cell.connect("edited", self._on_name_edited)
+        col_name.pack_start(cell)
+        col_name.add_attribute(cell, "text", 0)
+
+        #column codename
+        col_codename = gtk.TreeViewColumn("Código")
+        tree_attributes.append_column(col_codename)
+        cell = gtk.CellRendererText()
+        cell.set_property("editable", True)
+        cell.connect("edited", self._on_codename_edited)
+        col_codename.pack_start(cell)
+        col_codename.add_attribute(cell, "text", 1)
+
+        # data type ?? por el momento no lo ponemos
+        cell = gtk.CellRendererCombo()
+        cell.set_property("model",self._datatypes_store)
+        cell.set_property("has-entry", False)
+        cell.set_property("text-column", 0)#de donde sacar el texto para el combo
+        cell.set_property("editable", True)
+        cell.connect("edited", self._on_data_type_edited)
+        col_datatype = gtk.TreeViewColumn("Tipo de dato", cell)
+        col_datatype.set_attributes(cell, text=3)
+        tree_attributes.append_column(col_datatype)
+        #datatype length
+        cell = gtk.CellRendererText()
+        cell.set_property("editable", True)
+        col_datatype.pack_start(cell)
+        col_datatype.add_attribute(cell, "text", 5)
+
+
+        #pk
+        cell = gtk.CellRendererToggle()
+        cell.set_property("activatable", True)
+        col = gtk.TreeViewColumn("Identificador", cell)
+        col.set_attributes(cell, active=6)
+        tree_attributes.append_column(col)
+
+        #mandatory
+        cell = gtk.CellRendererToggle()
+        cell.set_property("activatable", True)
+        col = gtk.TreeViewColumn("Obligatorio", cell)
+        col.set_attributes(cell, active=7)
+        tree_attributes.append_column(col)
+
+        # column name
+        col_name = gtk.TreeViewColumn("Descripción")
+        tree_attributes.append_column(col_name)
+        cell = gtk.CellRendererText()
+        cell.set_property("editable", True)
+        col_name.pack_start(cell)
+        col_name.add_attribute(cell, "text", 8)
+
+        self._window.show_all()
 
     #signals
+    def _on_name_edited(self, cellrenderertext, path, new_text):
+        iter_ = self._attr_list.get_iter(path)
+
+        attr = self._attr_list.get_value(iter_, 9)
+
+        attr.set_name(new_text)
+        self._attr_list.set_value(iter_, 0, attr.get_name())
+
+        attr.set_codename(new_text)
+        self._attr_list.set_value(iter_, 1, attr.get_codename())
+
+    def _on_codename_edited(self, cellrenderertext, path, new_text):
+        iter_ = self._attr_list.get_iter(path)
+
+        attr = self._attr_list.get_value(iter_, 9)
+        attr.set_codename(new_text)
+
+        self._attr_list.set_value(iter_, 1, attr.get_codename())
+
+    def _on_data_type_edited(self, cellrenderertext, path, new_text):
+
+        iter_ = self._datatypes_store.get_iter_first()
+        while iter_ != None:
+
+            value = self._datatypes_store.get_value(iter_, 0)
+
+            if value == new_text:
+                iter_2 = self._attr_list.get_iter(path)
+
+                # TODO: debe actualizarse el object
+                self._attr_list.set(iter_2, 2, self._datatypes_store.get_value(iter_, 1))
+                self._attr_list.set(iter_2, 3, value)
+                break
+            iter_ = self._datatypes_store.iter_next(iter_)
+
+    def _on_new_attr_clicked(self, toolbutton):
+        attr = self._control.get_new_attribute()
+
+        #para saber si tiene datatype length
+        if len(attr.get_data_type()) > 1:
+            dt_length = attr.get_data_type()[1]
+        else:
+            dt_length = 0
+
+        self._attr_list.append([attr.get_name(),
+                                attr.get_codename(),
+                                attr.get_data_type()[0],
+                                self._control.logical_data_type_to_string(attr.get_data_type()[0]),
+                                self._datatypes_store,
+                                dt_length,
+                                attr.is_primary_key(),
+                                attr.is_mandatory(),
+                                attr.get_description(),
+                                attr])
+
+    def _on_btn_ok_clicked(self, button):
+
+        widget = self._wTree.get_widget("entry_name")
+        self._entity.set_name(widget.get_text())
+
+        widget = self._wTree.get_widget("entry_codename")
+        self._entity.set_codename(widget.get_text())
+
+        widget = self._wTree.get_widget("txt_description")
+        buff = widget.get_buffer()
+        text = buff.get_text(buff.get_start_iter(), buff.get_end_iter())
+        self._entity.set_description(text)
+
+        self._control.refresh()
+
+
+    def _on_btn_cancel_clicked(self, button):
+        pass
+
     def on_fill_color_set(self, colorbutton):
         pass
 
@@ -973,12 +1187,6 @@ class ViewEditEntity:
         pass
 
     def on_mandatory_toggled(self, checkbutton):
-        pass
-
-    def on_btn_ok_clicked(self, checkbutton):
-        pass
-
-    def on_btn_cancel_clicked(self, checkbutton):
         pass
 
 class ViewEditRelationship:
@@ -1063,9 +1271,9 @@ class ViewMainWindow:
         self._menubar = None
 
         ## properties
-        self._files_opened = None
-        self._files_list = None
-        self._canvas_list = None
+        self._files_opened = list()
+        self._files_list = list()
+        self._canvas_list = list()
         self._selected_item = None
 
 
@@ -1088,6 +1296,11 @@ class ViewMainWindow:
         ## tvcol.pack_start(cell)
         ## tvcol.add_attribute(cell, 'text', 0)
 
+
+        self._canvas_list.append(Canvas())
+
+        ntbk = self._wTree.get_widget("ntbk_main")
+        ntbk.append_page(self._canvas_list[0].scrolled_win,gtk.Label("canvas de prueba"))
 
         # the properties of the window were defined
         self._window = self._wTree.get_widget("wndmain")
@@ -1149,7 +1362,7 @@ class ViewMainWindow:
             ('About', gtk.STOCK_ABOUT, None, None, None,
              self.on_about_clicked),
             ('Entity', gtk.STOCK_MISSING_IMAGE, 'Entidad', None, None,
-             self.on_add_entity_clicked),
+             self._on_add_entity_clicked),
             ('Relationship', gtk.STOCK_MISSING_IMAGE, 'Relación', None, None,
              self.on_add_relationship_clicked),
             ('Inheritance', gtk.STOCK_MISSING_IMAGE, 'Herencia', None, None,
@@ -1260,8 +1473,9 @@ class ViewMainWindow:
     def on_close_file_clicked(self, menuitem):
         pass
 
-    def on_add_entity_clicked(self, menuitem):
-        pass
+    def _on_add_entity_clicked(self, menuitem):
+        item = self._control.add_entity(0,0)
+        self._canvas_list[0].add_child(item)
 
     def on_add_relationship_clicked(self, menuitem):
         pass
