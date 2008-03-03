@@ -1009,13 +1009,6 @@ class ViewEditEntity:
                                     attr.is_mandatory(),
                                     attr.get_description()])
 
-        ############## datos de prueba
-        self._attr_list.append(["rut","RUT",6, "INTEGER",self._datatypes_store, 0, True, True, "descripcion",None])
-        self._attr_list.append(["nombre","NOMBRE",1, "VARCHAR",self._datatypes_store, 0, False, True, "descripcion",None])
-        self._attr_list.append(["apellido p","APELLIDO_P",1, "VARCHAR",self._datatypes_store, 0, False, True, "descripcion",None])
-        self._attr_list.append(["direccion","DIRECCION",1, "VARCHAR",self._datatypes_store, 0, False, False, "descripcion",None])
-        ##############
-
         tree_attributes.set_model(self._attr_list)
 
         # column name
