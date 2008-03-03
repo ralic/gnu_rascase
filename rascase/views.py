@@ -4,18 +4,18 @@
 ## Login : <freyes@yoda>
 ## Started on  Tue Jan 22 11:29:49 2008 Felipe Reyes
 ## $Id$
-## 
+##
 ## Copyright (C) 2008 Felipe Reyes <felipereyes@gmail.com>
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation; either version 2 of the License, or
 ## (at your option) any later version.
-## 
+##
 ## This program is distributed in the hope that it will be useful,
 ## but WITHOUT ANY WARRANTY; without even the implied warranty of
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ## GNU General Public License for more details.
-## 
+##
 ## You should have received a copy of the GNU General Public License
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
@@ -560,7 +560,7 @@ class EntityComponent(RectBaseComponent):
                                             top_padding=5)
 
     def add_attribute(self,attribute):
-        """Agrega un nuevo atributo a la entidad"""
+        "Agrega un nuevo atributo a la entidad"
 
         self._body.add_child(attribute.items['name'])
         self._body.set_child_properties(attribute.items['name'],
@@ -611,26 +611,13 @@ class EntityComponent(RectBaseComponent):
         """
         return self._body
 
-class AttributeComponent(goocanvas.Text):
-    """Componente gráfico que se pone dentro de una entidad"""
-    def __init__(self, name, datatype, default_value=None, pk=False, mandatory=False):
+class AttributeComponent:
+    "Componente gráfico que se pone dentro de una entidad"
+    def __init__(self, attribute_model):
 
-        self._name = name
-        self._default_value = default_value
-        self._mandatory = mandatory
-        self._primary_key = pk
-        self._data_type = datatype[0]
-        if len(datatype) > 1:
-            self._data_type_length = datatype[1]
-        else:
-            self._data_type_length = None
+        self._attribute_model = attribute_model
 
-        ## goocanvas.Text.__init__(self, text=self._build_text(),
-        ##                         use_markup=True,
-	## 			anchor=gtk.ANCHOR_SE,
-	## 			can_focus = False,
-        ##                         font="mono 8")
-        if self._mandatory:
+        if self._attribute_model.is_mandatory():
             text_m = "[M]"
         else:
             text_m = ""
