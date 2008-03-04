@@ -118,7 +118,7 @@ class RectBaseComponent(goocanvas.Group):
         self.connect("motion_notify_event",self._on_motion)
 
     def set_x(self, x):
-        self.translate(x-self._x,0)
+        self.translate(float(x)-self._x,0)
 
     def get_x(self):
         return self._x
@@ -539,8 +539,8 @@ class EntityComponent(RectBaseComponent):
         self._num_rows = 0
         self._bg = self._body
 
-        self.set_x(x)
-        self.set_y(y)
+        self.set_x(float(x))
+        self.set_y(float(y))
 
         # this table is the top level table of the EntityComponent
         # only contains the entity name, line separator, attributes table
@@ -1608,8 +1608,29 @@ class ViewMainWindow:
         pass
 
     def _on_files_list_row_activated(self, treeview, path, view_column):
-        canvas = self._control.construct_model(self._files_list[path[0]])
-        pass
+
+        new_canvas = self._control.construct_model(self._files_list[path[0]])
+
+        if new_canvas == None:
+            return
+
+        hbox = gtk.HBox()
+        widget = gtk.Label(os.path.basename(self._files_list[path[0]]))
+        hbox.pack_start(widget)
+
+        widget = gtk.Button()
+        hbox.pack_start(widget)
+        img = gtk.Image()
+        img.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
+        widget.add(img)
+
+        hbox.show_all()
+
+        ntbk = self._wTree.get_widget("ntbk_main")
+
+        ntbk.append_page(new_canvas.scrolled_win, hbox)
+        ntbk.set_current_page(-1)
+
 
     def _reload_files_list(self):
         "Debe ser llamada cada vez que la lista de archivos cambie (files_list)"

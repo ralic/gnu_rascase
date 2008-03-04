@@ -495,6 +495,14 @@ class LogicalModel(ModelBase):
         "Retorna una lista de entidades asociadas al modelo logico"
         return self._entities_list
 
+    def get_all_relationships(self):
+        "Retorna una lista de las relaciones asociadas al modelo logico"
+        return self._relationships_list
+
+    def get_all_inheritances(self):
+        "Retorna una lista de las herencias asociadas al modelo logico"
+        return self._inheritance_list
+
     def save(self, path=None):
         """Almacena el modelo en el archivo pasado como parámetro o el utilizado
         la última vez que se guardó el modelo
@@ -542,8 +550,8 @@ class Entity(LogicalBase, RectBase):
     def __init__(self, x=0, y=0, xmlnode=None):
         LogicalBase.__init__(self)
         RectBase.__init__(self)
-        self.set_x(x)
-        self.set_y(y)
+        self.set_x(float(x))
+        self.set_y(float(y))
         self._attributes_list = list()
 
         if (xmlnode != None):

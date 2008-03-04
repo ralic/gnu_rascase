@@ -251,6 +251,18 @@ class ControlMainWindow:
 
         return self._project.get_models()
 
+    def construct_model(self, filename):
+
+        model = self._project.get_model(filename)
+
+        if isinstance(model, LogicalModel):
+            return self._construct_logical_model(model)
+        elif isinstance(model, PhysicalModel):
+            return self._construct_physical_model(model)
+        else:
+            log.debug("Could not match the type of the instance %s", model)
+            return None
+
     def generate_physical_model(self, logicalmodel):
         pass
 
@@ -290,8 +302,10 @@ class ControlMainWindow:
     def close_model(self, model):
         pass
 
-    def add_entity(self, x, y):
+    def add_entity(self, x, y, modelpath):
+        logical_model = self._project.get_model(modelpath)
         entity_model = Entity()
+        logical_model.add_entity(entity_model)
         entity_control = ControlEntityComponent(entity_model)
 
         return entity_control._view
@@ -357,6 +371,25 @@ class ControlMainWindow:
         log = logging.getLogger('controllers')
         log.info("Quiting...")
         gtk.main_quit()
+
+    def _construct_logical_model(self, logical_model):
+        "Construye el canvas y todos los componentes con sus respectivos controladores"
+
+        canvas = Canvas()
+
+        for entity in logical_model.get_all_entites():
+            aux_item = ControlEntityComponent(entity)
+            canvas.add_child(aux_item._view)
+
+        for relationship in logical_model.get_all_relationships():
+            aux_item = ControlRelationshipComponent(relationship)
+            canvas.add_child(aux_item._view)
+
+        for inheritance in logical_model.get_all_inheritances():
+            aux_item = ControlInheritanceComponent(inheritance)
+            canvas.add_child(aux_item._view)
+
+        return canvas
 
 class ControlSaveFileDialog:
     def __init__(self, action, project=None, model=None, title=None, parent=None, filter=None):
