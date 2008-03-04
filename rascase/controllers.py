@@ -118,6 +118,7 @@ class ControlEntityComponent:
                                          attr.get_default_value(),
                                          attr.is_primary_key(),
                                          attr.is_mandatory())
+        attr_comp.set_data("model", attr)
 
         self._view.add_attribute(attr_comp)
 
@@ -130,7 +131,11 @@ class ControlEntityComponent:
         ControlEditEntity(self._entity_model, control=self, parent=parent)
 
     def refresh(self):
+        self._view.set_title(self._entity_model.get_name())
         self._view.refresh()
+
+        for attr in self._view.attr_list:
+            attr.refresh()
 
 class ControlRelationshipComponent:
     def __init__(self):
@@ -203,7 +208,21 @@ class ControlMainWindow:
         los path de los modelos que estan asociados al proyecto
 
         """
+
+        filtro = gtk.FileFilter()
+        filtro.add_pattern("*.rprj")
+        filtro.set_name("Proyecto")
+
+        filedialog = ControlSaveFileDialog(action=gtk.FILE_CHOOSER_ACTION_SAVE,
+                                           title="Gardar nuevo proyecto",
+                                           parent=self._view.get_window(),
+                                           filter=filtro)
+        aux_path = filedialog.get_path()
+        if aux_path == None:
+            return None
+
         self._project = Project()
+        self._project.save(aux_path)
         lista = list()
         modelos = self._project.get_models()
         for x in range(len(modelos)):
@@ -212,7 +231,25 @@ class ControlMainWindow:
         return lista
 
     def create_new_logical_model(self):
-        pass
+
+        filtro = gtk.FileFilter()
+        filtro.add_pattern("*.rxl")
+        filtro.set_name("Modelo Lógico")
+
+        filedialog = ControlSaveFileDialog(action=gtk.FILE_CHOOSER_ACTION_SAVE,
+                                           title="Gardar nuevo proyecto",
+                                           parent=self._view.get_window(),
+                                           filter=filtro)
+        aux_path = filedialog.get_path()
+        if aux_path == None:
+            log.debug("The user did not selected a path for the new logical model")
+            return None
+
+        logical_model = LogicalModel()
+        logical_model.save(aux_path)
+        self._project.add_model(logical_model)
+
+        return self._project.get_models()
 
     def generate_physical_model(self, logicalmodel):
         pass
@@ -235,11 +272,11 @@ class ControlMainWindow:
 
         self._project = Project(aux_path)
 
-        aux = list()
-        for elem in self._project.get_models():
-            aux.append(elem.get_path())
+        return self._project.get_models()
 
-        return aux
+    def save_project(self):
+        "Almacena el proyecto"
+        return self._project.save()
 
     def open_logical_model(self, path):
         pass

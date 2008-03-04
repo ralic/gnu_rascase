@@ -258,14 +258,14 @@ class Project:
         self._path = filepath
         self._models_list = list()
 
-        if os.path.isfile(self._path):
+        if os.path.isfile(str(self._path)):
             doc = xml.dom.minidom.parse(self._path)
             projectnode = doc.childNodes[0]
 
             for node in projectnode.getElementsByTagNameNS(XML_URI, "model"):
                 modelname = node.getAttributeNS(XML_URI, 'modelpath')
 
-                log.info("found the model %s inside project %s",
+                log.info("found the model '%s' inside project %s",
                          modelname, self._path)
 
                 # we get the extension of the filename
@@ -316,7 +316,19 @@ class Project:
 
     def get_models(self):
         "Retorna la lista de modelos asociados al proyecto"
-        return self._models_list
+        aux_list = list()
+        for model in self._models_list:
+            aux_list.append(model.get_path())
+
+        return aux_list
+
+    def get_model(self, path):
+        "Retorna el objeto modelo que este asociado al path pasado por parametro"
+        for model in self._models_list:
+            if model.get_path() == path:
+                return model
+
+        return None #if not found return None
 
     def del_model(self, model, del_from_disk=False):
         """Elimina el objeto modelo pasado como y opcionalmente borra el archivo
@@ -350,12 +362,12 @@ class Project:
         doc = xml.dom.minidom.Document()
 
         # crete the project node and add it to the document
-        prj = doc.createElementNS(XML_URI, "project")
+        prj = doc.createElementNS(XML_URI, "ras:project")
         doc.appendChild(prj)
 
         for i in range(len(self._models_list)):
-            model = doc.createElementNS(XML_URI, "model")
-            model.setAttributeNS(XML_URI, "modelpath",
+            model = doc.createElementNS(XML_URI, "ras:model")
+            model.setAttributeNS(XML_URI, "ras:modelpath",
                                  self._models_list[i].get_path())
             prj.appendChild(model)
 
@@ -364,6 +376,7 @@ class Project:
 
         xml.dom.ext.PrettyPrint(doc, open(self._path, "w"))
         log.debug("Project %s written", self._path)
+        return True
 
 #TODO: implementar esta clase y definir el comportamiento que debe tener
 class Print:

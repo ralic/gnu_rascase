@@ -13,7 +13,10 @@
       <menuitem action="Quit"/>
     </menu>
     <menu action="Project">
+      <menuitem action="NewProject"/>
       <menuitem action="OpenProject"/>
+      <separator/>
+      <menuitem action="SaveProject"/>
       <separator/>
       <menuitem action="AddModel"/>
       <menuitem action="RemoveModel"/>

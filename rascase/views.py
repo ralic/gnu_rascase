@@ -319,7 +319,11 @@ class DragBox(goocanvas.Rect):
 
             # this is trick to get a color behind a goocanvas.Table
             if bg != None:
-                bg.props.height = bg.props.height - dif
+                if isinstance(bg, goocanvas.Text):
+                    pass
+                else:
+                    bg.props.height = bg.props.height - dif
+
                 bg.translate(0,dif)
 
             #make the dragbox follow the corners of the square
@@ -338,8 +342,12 @@ class DragBox(goocanvas.Rect):
             body.translate(0, dif_y)
 
             if bg != None:
-                bg.props.width = bg.props.width + dif_x
-                bg.props.height = bg.props.height - dif_y
+                if isinstance(bg, goocanvas.Text):
+                    pass
+                else:
+                    bg.props.width = bg.props.width + dif_x
+                    bg.props.height = bg.props.height - dif_y
+
                 bg.translate(0, dif_y)
 
             #make the dragbox follow the corner
@@ -373,7 +381,10 @@ class DragBox(goocanvas.Rect):
 
             if bg != None:
                 bg.props.width = bg.props.width + dif_x
-                bg.props.height = bg.props.height + dif_y
+                if isinstance(bg, goocanvas.Text):
+                    pass
+                else:
+                    bg.props.height = bg.props.height + dif_y
 
             #move the dragbox
             item.get_parent().dragbox['N'].translate (dif_x/2, 0)
@@ -390,7 +401,10 @@ class DragBox(goocanvas.Rect):
             body.props.height = body.props.height + dif
 
             if bg != None:
-                bg.props.height = bg.props.height + dif
+                if isinstance(bg, goocanvas.Text):
+                    pass
+                else:
+                    bg.props.height = bg.props.height + dif
 
             #move the dragbox
             item.get_parent().dragbox['W'].translate (0, dif/2)
@@ -408,8 +422,12 @@ class DragBox(goocanvas.Rect):
             body.translate(dif_x,0)
 
             if bg != None:
-                bg.props.height = bg.props.height + dif_y
-                bg.props.width = bg.props.width - dif_x
+                if isinstance(bg, goocanvas.Text):
+                    pass
+                else:
+                    bg.props.height = bg.props.height + dif_y
+                    bg.props.width = bg.props.width - dif_x
+
                 bg.translate(dif_x, 0)
 
             #move the dragbox
@@ -447,9 +465,13 @@ class DragBox(goocanvas.Rect):
             body.translate(dif_x,dif_y)
 
             if bg != None:
-                bg.props.height = bg.props.height - dif_y
-                bg.props.width = bg.props.width - dif_x
+                if isinstance(bg, goocanvas.Text):
+                    pass
+                else:
+                    bg.props.height = bg.props.height - dif_y
+                    bg.props.width = bg.props.width - dif_x
                 bg.translate(dif_x,dif_y)
+
 
             #move the dragbox
             item.get_parent().dragbox['E'].translate (0, dif_y/2)
@@ -471,8 +493,9 @@ class RectangleComponent(RectBaseComponent):
         pass
 
 class LabelComponent(RectBaseComponent):
-    def __init__(self):
+    def __init__(self, control):
         RectBaseComponent.__init__(self)
+        self._control = control
         # set the default color of the labels
         # TODO: use gconf to let the preferences selected by the user modify this
         self.set_fillcolor(TANGO_COLOR_BUTTER_LIGHT)
@@ -482,30 +505,37 @@ class LabelComponent(RectBaseComponent):
                                     use_markup=True,
                                     font="DejaVu Sans normal 8") #the font need to be parametrized with gconf
 
+        self.connect("on-double-click", self._on_edit_label_selected)
+
     def set_text(self, text):
         self._bg.set_property("text", text)
+        self.translate(0,0)
 
     def get_text(self):
         return self._bg.get_property("text")
-
-    def _on_focus_in(self, item, target_item, event):
-        RectBaseComponent._on_focus_in(self, item, target_item, event)
-        print "foco in"
 
     def set_font(self, font):
         """Define la fuente que debe usar la instancia de LabelComponent
 
         El parametro font es un string con el mismo formato que el constructor de pango.FontDescription"""
-        return self._bg.set_property("font", font)
+        self._bg.set_property("font", font)
+        self.translate(0,0)
 
     def get_font(self):
         "Retorna la fuente que esta usando la instancia de LabelComponent"
         return self._bg.get_property("font")
 
+    #signals
+    def _on_edit_label_selected(self, item):
+        #self._control.
+        pass
+
+
 class EntityComponent(RectBaseComponent):
 
     def __init__(self, name, x=0, y=0):
         RectBaseComponent.__init__(self)
+        self.attr_list = list()
         self._num_rows = 0
         self._bg = self._body
 
@@ -522,7 +552,8 @@ class EntityComponent(RectBaseComponent):
                                          fill_color="black")
 
         # the title of the entity
-        self._entity_title = goocanvas.Text(text="<b>" + str(name) + "</b>",
+        self._name = name
+        self._entity_title = goocanvas.Text(text="<b>" + str(self._name) + "</b>",
                                             use_markup=True,
                                             font="sans 8")
 
@@ -561,6 +592,8 @@ class EntityComponent(RectBaseComponent):
 
     def add_attribute(self,attribute):
         "Agrega un nuevo atributo a la entidad"
+
+        self.attr_list.append(attribute)
 
         self._body.add_child(attribute.items['name'])
         self._body.set_child_properties(attribute.items['name'],
@@ -611,34 +644,34 @@ class EntityComponent(RectBaseComponent):
         """
         return self._body
 
-class AttributeComponent:
-    "Componente gráfico que se pone dentro de una entidad"
-    def __init__(self, attribute_model):
-
-        self._attribute_model = attribute_model
-
-        if self._attribute_model.is_mandatory():
-            text_m = "[M]"
-        else:
-            text_m = ""
-
-        if self._primary_key:
-            text_name = "<u>" + self._name + "</u>"
-        else:
-            text_name = self._name
-
-        #FIXME: this should not happen, the controller must do this
-        from rascase.core import LogicalDataType
-        text_dt = LogicalDataType.to_string(self._data_type)
-        if isinstance(self._data_type_length, int):
-            text_dt = text_dt + "(" + str(self._data_type_length) + ")"
-
-        self.items = {'mandatory':goocanvas.Text(text=text_m, use_markup=True, font="sans 8"),
-                      'name':goocanvas.Text(text=text_name, use_markup=True, font="sans 8"),
-                      'datatype':goocanvas.Text(text=text_dt, use_markup=True, font="sans 8")
-                      }
+    def set_title(self, name):
+        self._name = "<b>" + name + "</b>"
 
     def refresh(self):
+        print "nombre entidad:", self._name
+        self._entity_title.set_property("text", self._name)
+        self.translate(0,0) #trick to update the view
+
+class AttributeComponent(gobject.GObject):
+    "Componente gráfico que se pone dentro de una entidad"
+    def __init__(self, name, datatype, default_value=None, pk=False, mandatory=False):
+        gobject.GObject.__init__(self)
+        self._name = name
+        self._default_value = default_value
+        self._mandatory = mandatory
+        self._primary_key = pk
+        self._data_type = datatype[0]
+
+        if len(datatype) > 1:
+            self._data_type_length = datatype[1]
+        else:
+            self._data_type_length = None
+
+        self.items = {'mandatory':goocanvas.Text(text="", use_markup=True, font="sans 8"),
+                      'name':goocanvas.Text(text="", use_markup=True, font="sans 8"),
+                      'datatype':goocanvas.Text(text="", use_markup=True, font="sans 8")
+                      }
+
         if self._mandatory:
             text_m = "[M]"
         else:
@@ -658,6 +691,51 @@ class AttributeComponent:
         self.items['mandatory'].set_property("text", text_m)
         self.items['name'].set_property("text", text_name)
         self.items['datatype'].set_property("text", text_dt)
+
+    def refresh(self):
+        mod = self.get_data("model")
+
+        if mod.is_mandatory() != self._mandatory:
+            self._mandatory = mod.is_mandatory()
+            if self._mandatory:
+                text_m = "[M]"
+            else:
+                text_m = ""
+            self.items['mandatory'].set_property("text", text_m)
+
+
+        if mod.is_primary_key() != self._primary_key:
+            self._primary_key = mod.is_primary_key()
+            if self._primary_key:
+                text_name = "<u>" + self._name + "</u>"
+            else:
+                text_name = self._name
+            self.items['name'].set_property("text", text_name)
+
+        #FIXME: this should not happen, the controller must do this
+        dt_changed = False
+        if mod.get_data_type()[0] != self._data_type:
+            self._data_type = mod.get_data_type()[0]
+            dt_changed = True
+
+        if (len(mod.get_data_type())>1):
+            if mod.get_data_type()[1] != self._data_type_length:
+                self._data_type_length = mod.get_data_type()[1]
+                dt_changed = True
+        else:
+            self._data_type_length = None
+            dt_changed = True
+        if dt_changed:
+            from rascase.core import LogicalDataType
+            text_dt = LogicalDataType.to_string(self._data_type)
+            if self._data_type_length != None:
+                text_dt = text_dt + "(" + str(self._data_type_length) + ")"
+
+            self.items['datatype'].set_property("text", text_dt)
+
+        #trick to update the view
+        for item in self.items:
+            item.translate(0,0)
 
     def set_primary_key (self, valor) :
         self._primary_key = valor
@@ -1140,6 +1218,7 @@ class ViewEditEntity:
         self._entity.set_description(text)
 
         self._control.refresh()
+        self._window.destroy()
 
 
     def _on_btn_cancel_clicked(self, button):
@@ -1321,8 +1400,12 @@ class ViewMainWindow:
             ('Quit', gtk.STOCK_QUIT, None, '<Control>q', None,
              self._on_quit_selected),
             ('Project', None, '_Proyecto', None, None, None),
+            ('NewProject', gtk.STOCK_NEW, None, '', 'Nuevo Proyecto',
+             self._on_new_project),
             ('OpenProject', gtk.STOCK_OPEN, None, '', 'Abrir proyecto',
              self._on_open_project),
+            ('SaveProject', gtk.STOCK_SAVE, None, '', 'Guardar proyecto',
+             self._on_save_project),
             ('AddModel', gtk.STOCK_ADD, None, None, 'Añadir un modelo',
              self.on_add_model_to_project),
             ('RemoveModel', gtk.STOCK_REMOVE, None, None, 'Remover modelo del proyecto',
@@ -1348,7 +1431,7 @@ class ViewMainWindow:
             ('Inheritance', gtk.STOCK_MISSING_IMAGE, 'Herencia', None, None,
              self.on_add_inheritance_clicked),
             ('Label', gtk.STOCK_MISSING_IMAGE, 'Etiqueta', None, None,
-             self.on_add_label_clicked),
+             self._on_add_label_clicked),
             ('Rectangle', gtk.STOCK_MISSING_IMAGE, 'Rectangulo', None, None,
              self.on_add_relationship_clicked),
             ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, None,
@@ -1409,30 +1492,39 @@ class ViewMainWindow:
         if response == gtk.RESPONSE_ACCEPT:
             self._control.quit()
 
-    def on_new_project(self, menuitem):
-        pass
+    def _on_new_project(self, menuitem):
+        self._files_list = self._control.create_new_project()
+        self._reload_files_list()
 
     def on_new_model(self, menuitem):
-        pass
+        aux = self._control.create_new_logical_model()
+        print "HOLA ", aux
+        if aux == None:
+            statusbar = self._wTree.get_widget("statusbar")
+            context_id = statusbar.get_context_id("Model not created")
+            msg_id = statusbar.push(context_id, "Cancelada la creación de un nuevo modelo lógico")
+            gobject.timeout_add(10000,self._remove_from_statusbar,context_id, msg_id)
+        else:
+            print aux
+            self._files_list = aux
+            self._reload_files_list()
 
     def _on_open_project(self, menuitem):
 
         # obtain the list of models associated to the project
         self._files_list = self._control.open_project(path=None)
+        self._reload_files_list()
 
-        liststore = gtk.ListStore(gobject.TYPE_STRING)
-        treeview = self._wTree.get_widget("files_list")
+    def _on_save_project(self, menuitem):
+        answer = self._control.save_project()
+        statusbar = self._wTree.get_widget("statusbar")
+        context_id = statusbar.get_context_id("save project")
+        if answer:
+            msg_id = statusbar.push(context_id, "El proyecto ha sido guardado exitosamente")
+        else:
+            msg_id = statusbar.push(context_id, "El proyecto no ha podido ser guardado")
 
-        treeview.set_model(liststore)
-
-        for elem in self._files_list:
-            liststore.append([os.path.basename(str(elem))])
-
-        treeviewcol = gtk.TreeViewColumn("Modelos")
-        treeview.append_column(treeviewcol)
-        cell = gtk.CellRendererText()
-        treeviewcol.pack_start(cell)
-        treeviewcol.add_attribute(cell, "text", 0)
+        gobject.timeout_add(10000, self._remove_from_statusbar, context_id, msg_id)
 
     def on_open_model(self, menuitem):
         pass
@@ -1463,7 +1555,8 @@ class ViewMainWindow:
     def on_add_inheritance_clicked(self, menuitem):
         pass
 
-    def on_add_label_clicked(self, menuitem):
+    def _on_add_label_clicked(self, menuitem):
+        #self._control.add_label()
         pass
 
     def on_add_rectangle_clicked(self,menuitem):
@@ -1517,6 +1610,33 @@ class ViewMainWindow:
     def _on_files_list_row_activated(self, treeview, path, view_column):
         canvas = self._control.construct_model(self._files_list[path[0]])
         pass
+
+    def _reload_files_list(self):
+        "Debe ser llamada cada vez que la lista de archivos cambie (files_list)"
+        liststore = gtk.ListStore(gobject.TYPE_STRING)
+        treeview = self._wTree.get_widget("files_list")
+
+        treeview.set_model(liststore)
+
+        for elem in self._files_list:
+            liststore.append([os.path.basename(str(elem))])
+
+        cols = treeview.get_columns()
+        for i in cols:
+            treeview.remove_column(i)
+
+        treeviewcol = gtk.TreeViewColumn("Modelos")
+        treeview.append_column(treeviewcol)
+        cell = gtk.CellRendererText()
+        treeviewcol.pack_start(cell)
+        treeviewcol.add_attribute(cell, "text", 0)
+
+    def _remove_from_statusbar(self, context_id, msg_id):
+        statusbar = self._wTree.get_widget("statusbar")
+        statusbar.remove(context_id, msg_id)
+
+        return False #stop being called by gobject.timeout_add
+
 
     def get_window(self):
         "retorna la ventana principal, para ser utilizada en los dialogos como ventana padre"
