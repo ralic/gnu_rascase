@@ -1008,6 +1008,7 @@ class Canvas(goocanvas.Canvas):
         goocanvas.Canvas.__init__(self, **kargs)
         self.scrolled_win = gtk.ScrolledWindow()
         self.scrolled_win.set_shadow_type(gtk.SHADOW_IN)
+        self.scrolled_win.set_data("canvas", self)
         self.scrolled_win.show()
 
         self.set_flags(gtk.CAN_FOCUS)
@@ -1335,40 +1336,17 @@ class ViewMainWindow:
         self._canvas_list = list()
         self._selected_item = None
 
-
         # the association of the signals defined inside glade and the python methods
         signals_dic = {"on_wndmain_delete_event":self._on_delete_main_window,
                        "on_files_list_row_activated":self._on_files_list_row_activated}
         self._wTree.signal_autoconnect(signals_dic)
 
-        # se ponen los archivos en el files_list
-        ## files_list = self.wTree.get_widget("files_list")
-        ## files_list_model = gtk.ListStore(gobject.TYPE_STRING)
-        ## files_list_model.append(["ejemplo.rxl"])
-        ## files_list_model.append(["ejemplo2.rxl"])
-        ## files_list_model.append(["webshop.rxl"])
-        ## files_list_model.append(["libreria.rxl"])
-        ## files_list.set_model(files_list_model)
-        ## tvcol = gtk.TreeViewColumn("Modelo")
-        ## files_list.append_column(tvcol)
-        ## cell = gtk.CellRendererText()
-        ## tvcol.pack_start(cell)
-        ## tvcol.add_attribute(cell, 'text', 0)
-
-
-        self._canvas_list.append(Canvas())
-
-        ntbk = self._wTree.get_widget("ntbk_main")
-        ntbk.append_page(self._canvas_list[0].scrolled_win,gtk.Label("canvas de prueba"))
-
         # the properties of the window were defined
         self._window = self._wTree.get_widget("wndmain")
         self._window.set_default_size(600,500)
-        self._window.set_title("RasCASE")
-        if self._window is None:
-            print "self.win es none"
+        self._window.set_title("Rascase")
 
-        self._construct_toolbar()
+        self._construct_toolbar() # we construct the toolbar
 
         self._window.show_all()
 
@@ -1630,7 +1608,6 @@ class ViewMainWindow:
 
         ntbk.append_page(new_canvas.scrolled_win, hbox)
         ntbk.set_current_page(-1)
-
 
     def _reload_files_list(self):
         "Debe ser llamada cada vez que la lista de archivos cambie (files_list)"
