@@ -68,27 +68,20 @@ TRANSPARENT_COLOR = int("000000",16)
 class RectBaseComponent(goocanvas.Group):
     __gsignals__ = {
         'on-movement': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'on-double-click': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+        'on-double-click': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'changed-dimensions': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
         }
 
-    #some constants that probably must be deleted :P
-    _ANCHO = 100
-    _ALTO = 200
-    _ANCHO_LINEA = 1.0
-    _COLOR_RELLENO = TANGO_COLOR_SKYBLUE_LIGHT
-
-    def __init__(self):
+    def __init__(self, width=100, height=200):
         goocanvas.Group.__init__(self,can_focus = True)
 
-        self._dragbox = None
-
         self._body = goocanvas.Rect(parent=self,
-                                    width=RectBaseComponent._ANCHO,
-                                    height=RectBaseComponent._ALTO,
-                                    line_width=RectBaseComponent._ANCHO_LINEA,
+                                    width=width,
+                                    height=height,
+                                    line_width=1.0,
                                     fill_color_rgba=TANGO_COLOR_SKYBLUE_LIGHT,
                                     stroke_color="black",
-                                    antialias=cairo.ANTIALIAS_SUBPIXEL)
+                                    antialias=cairo.ANTIALIAS_DEFAULT)
 
         self._x = 0
         self._y = 0
@@ -97,13 +90,13 @@ class RectBaseComponent(goocanvas.Group):
         self._dragging= False
         self.dragbox = {
             'NW': DragBox('NW',-5,-5),
-            'N' : DragBox('N', self._ANCHO/2-2.5,-5),
-            'NE': DragBox('NE',self._ANCHO-5,-5),
-            'E' : DragBox('E', self._ANCHO-5,self._ALTO/2-2.5),
-            'SE': DragBox('SE',self._ANCHO-5,self._ALTO-5),
-            'S' : DragBox('S', self._ANCHO/2-2.5,self._ALTO-5),
-            'SW': DragBox('SW',-5, self._ALTO-5),
-            'W' : DragBox('W', -5,self._ALTO/2-2.5)
+            'N' : DragBox('N', width/2-2.5, -5),
+            'NE': DragBox('NE',width-5, -5),
+            'E' : DragBox('E', width-5, height/2-2.5),
+            'SE': DragBox('SE',width-5, height-5),
+            'S' : DragBox('S', width/2-2.5, height-5),
+            'SW': DragBox('SW',-5, height-5),
+            'W' : DragBox('W', -5, height/2-2.5)
             }
 
         for item in self.dragbox.keys():
@@ -135,27 +128,39 @@ class RectBaseComponent(goocanvas.Group):
         self._y += diff_y
 
     def set_width(self, width):
-        self.set_property("width", width)
+        if hasattr(self, "_bg"):
+            self._bg.set_property("width", float(width))
+        else:
+            self._body.set_property("width", float(width))
 
     def get_width(self):
-        return self._body.get_property("width")
+        if hasattr(self, "_bg"):
+            return self._bg.get_property("width")
+        else:
+            return self._body.get_property("width")
 
     def set_height(self, height):
-        self.set_property("height", height)
+        if hasattr(self, "_bg"):
+            self._bg.set_property("height", float(height))
+        else:
+            self._bg.set_property("height", float(height))
 
     def get_height(self):
-        return self._body.get_property("height")
+        if hasattr(self, "_bg"):
+            return self._bg.get_property("height")
+        else:
+            return self._body.get_property("height")
 
     def set_linecolor(self, color):
 
         self._linecolor = color
 
-        if isinstance(color, str):
+        if isinstance(color, str) or isinstance(color, unicode):
             self._body.set_property("stroke-color", color)
-        elif isinstance(color, int):
+        elif isinstance(color, int) or isinstance(color, long):
             self._body.set_property("stroke-color-rgba", color)
         else:
-            log.debug("passing %s to set_linecolor", color)
+            log.error("passing %s to set_linecolor (%s)", color, type(color))
 
     def get_linecolor(self):
         return self._linecolor
@@ -481,6 +486,8 @@ class DragBox(goocanvas.Rect):
             item.get_parent().dragbox['SW'].translate (dif_x, 0)
             item.get_parent().dragbox['S'].translate (dif_x/2, 0)
 
+        item.get_parent().emit("changed-dimensions")
+
 
 class RectangleComponent(RectBaseComponent):
     def __init__(self):
@@ -533,8 +540,8 @@ class LabelComponent(RectBaseComponent):
 
 class EntityComponent(RectBaseComponent):
 
-    def __init__(self, name, x=0, y=0):
-        RectBaseComponent.__init__(self)
+    def __init__(self, name, x=0, y=0, width=100, height=100):
+        RectBaseComponent.__init__(self, width=width, height=height)
         self.attr_list = list()
         self._num_rows = 0
         self._bg = self._body
@@ -545,8 +552,8 @@ class EntityComponent(RectBaseComponent):
         # this table is the top level table of the EntityComponent
         # only contains the entity name, line separator, attributes table
         self._toptable = goocanvas.Table(parent=self,
-                                         width=RectBaseComponent._ANCHO,
-                                         height=RectBaseComponent._ALTO,
+                                         width=self.get_width(),
+                                         height=self.get_height(),
                                          column_spacing=5,
                                          row_spacing=2,
                                          fill_color="black")
@@ -577,8 +584,8 @@ class EntityComponent(RectBaseComponent):
                                             column=0)
 
         # this table must contain the attributes
-        self._body = goocanvas.Table(width=RectBaseComponent._ANCHO,
-                                     height=RectBaseComponent._ALTO,
+        self._body = goocanvas.Table(width=self.get_width(),
+                                     height=self.get_height(),
                                      column_spacing=5,
                                      row_spacing=2,
                                      fill_color="black")
@@ -1350,6 +1357,275 @@ class ViewMainWindow:
 
         self._window.show_all()
 
+
+    # signals
+
+    def _on_delete_main_window(self, widget, event):
+        "callback conectado al evento 'delete' de la ventana principal"
+
+        widget = self._uimanager.get_widget("/menubar/File/Quit")
+
+        widget.activate()
+        return True
+
+    def _on_quit_selected(self, menuitem):
+        "callback conectado a la opcion salir de la aplicacion"
+        dialog = gtk.Dialog("Salir",
+                            self._window,
+                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                             gtk.STOCK_QUIT, gtk.RESPONSE_ACCEPT))
+
+        box = gtk.HBox()
+
+        widget = gtk.Image()
+        widget.set_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_DIALOG)
+        box.pack_start(widget)
+
+        widget = gtk.Label("¿Desea salir y perder todos los cambios efectuados?")
+        box.pack_start(widget)
+
+        box.show_all()
+        dialog.vbox.pack_start(box)
+
+        response = dialog.run()
+        dialog.destroy()
+
+        if response == gtk.RESPONSE_ACCEPT:
+            self._control.quit()
+
+    def _on_new_project(self, menuitem):
+        self._files_list = self._control.create_new_project()
+        self._reload_files_list()
+
+    def _on_new_model(self, menuitem):
+        aux = self._control.create_new_logical_model()
+        if aux == None:
+            statusbar = self._wTree.get_widget("statusbar")
+            context_id = statusbar.get_context_id("Model not created")
+            msg_id = statusbar.push(context_id, "Cancelada la creación de un nuevo modelo lógico")
+            gobject.timeout_add(10000,self._remove_from_statusbar,context_id, msg_id)
+        else:
+            print aux
+            self._files_list = aux
+            self._reload_files_list()
+
+    def _on_open_project(self, menuitem):
+
+        # obtain the list of models associated to the project
+        self._files_list = self._control.open_project(path=None)
+        self._reload_files_list()
+
+    def _on_save_project(self, menuitem):
+        answer = self._control.save_project()
+        statusbar = self._wTree.get_widget("statusbar")
+        context_id = statusbar.get_context_id("save project")
+        if answer:
+            msg_id = statusbar.push(context_id, "El proyecto ha sido guardado exitosamente")
+        else:
+            msg_id = statusbar.push(context_id, "El proyecto no ha podido ser guardado")
+
+        gobject.timeout_add(10000, self._remove_from_statusbar, context_id, msg_id)
+
+    def on_open_model(self, menuitem):
+        pass
+
+    def _on_save_model(self, menuitem):
+        ntbk = self._wTree.get_widget("ntbk_main")
+
+        child = ntbk.get_nth_page(ntbk.get_current_page())
+        canvas = child.get_data("canvas")
+
+        filepath = None
+        for x in self._files_opened:
+            if x[1] == canvas:
+                filepath = x[0]
+
+        if filepath == None:
+            log.debug("mmm trying to save a model but could not be found the modelpath")
+            return
+
+        self._control.save_model(filepath)
+
+    def on_save_model_as(self, menuitem):
+        pass
+
+    def on_add_model_to_project(self, menuitem):
+        pass
+
+    def on_remove_model(self, menuitem): #remove the model from the project
+        pass
+
+    def on_delete_model(self, menuitem):
+        pass
+
+    #on the close button of the gtk.Notebook page is clicked
+    def on_close_file_clicked(self, menuitem):
+        pass
+
+    def _on_add_entity_clicked(self, menuitem):
+
+        ntbk = self._wTree.get_widget("ntbk_main")
+        page = ntbk.get_current_page()
+        child = ntbk.get_nth_page(page)
+        canvas = child.get_data("canvas")
+
+        filepath = None
+        for x in self._files_opened:
+            if x[1] == canvas:
+                filepath = x[0]
+                break
+        print "filepath: ", filepath
+        item = self._control.add_entity(0,0, filepath)
+        canvas.add_child(item)
+
+    def on_add_relationship_clicked(self, menuitem):
+        pass
+
+    def on_add_inheritance_clicked(self, menuitem):
+        pass
+
+    def _on_add_label_clicked(self, menuitem):
+        #self._control.add_label()
+        pass
+
+    def on_add_rectangle_clicked(self,menuitem):
+        pass
+
+    #aqui se debe chequear el tipo de componente grafico que se quiere editar
+    #para luego hacer la llamada al método correspondiente
+    def on_edit_component(self, item, target_item, event):
+        pass
+
+    def on_delete_component(self, item, target_item, event):
+        pass
+
+    #callbacks usados por el uimanager
+    def on_delete_component_clicked(self, menuitem):
+        pass
+
+    def on_edit_component_clicked(self, menuitem):
+        pass
+
+    def on_generate_physical_model_clicked(self, menuitem):
+        pass
+
+    def on_btn_print_clicked(self, menuitem):
+        pass
+
+    def on_btn_export_clicked(self, menuitem):
+        pass
+
+    def _on_zoomin_clicked(self, menuitem):
+        ntbk = self._wTree.get_widget("ntbk_main")
+
+        child = ntbk.get_nth_page(ntbk.get_current_page())
+
+        if child == None:
+            log.error("Troubles with the zoomin callback")
+
+        canvas = child.get_data("canvas")
+
+        current_scale = canvas.get_property("scale")
+        canvas.set_scale(current_scale + 0.1)
+
+    def on_zoomout_clicked(self, menuitem):
+        ntbk = self._wTree.get_widget("ntbk_main")
+
+        child = ntbk.get_nth_page(ntbk.get_current_page())
+
+        if child == None:
+            log.error("Troubles with the zoomin callback")
+
+        canvas = child.get_data("canvas")
+
+        current_scale = canvas.get_property("scale")
+        if current_scale < 0.1:
+            return
+
+        canvas.set_scale(current_scale - 0.1)
+
+    def on_btn_send_to_back_clicked(self, menuitem):
+        pass
+
+    def on_btn_send_to_front_clicked(self, menuitem):
+        pass
+
+    def on_edit_preferences_clicked(self, menuitem):
+        pass
+
+    def on_show_help_clicked(self, menuitem):
+        pass
+
+    def on_about_clicked(self, menuitem):
+        pass
+
+    def _on_files_list_row_activated(self, treeview, path, view_column):
+
+        ntbk = self._wTree.get_widget("ntbk_main")
+
+        for x in self._files_opened:
+            if x[0] == self._files_list[path[0]]:
+                log.debug("Trying to open an already opened file")
+                page_num = ntbk.page_num(x[1].scrolled_win)
+                if page_num == -1:
+                    log.debug("The child could not be found inside the main notebook")
+                    return
+                else:
+                    ntbk.set_current_page(page_num)
+                    return
+
+        new_canvas = self._control.construct_model(self._files_list[path[0]])
+
+        if new_canvas == None:
+            return
+
+        self._files_opened.append((self._files_list[path[0]],new_canvas))
+
+        hbox = gtk.HBox()
+        widget = gtk.Label(os.path.basename(self._files_list[path[0]]))
+        hbox.pack_start(widget)
+
+        widget = gtk.Button()
+        hbox.pack_start(widget)
+        img = gtk.Image()
+        img.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
+        widget.add(img)
+
+        hbox.show_all()
+
+        ntbk.append_page(new_canvas.scrolled_win, hbox)
+        ntbk.set_current_page(-1)
+
+    def _reload_files_list(self):
+        "Debe ser llamada cada vez que la lista de archivos cambie (files_list)"
+        liststore = gtk.ListStore(gobject.TYPE_STRING)
+        treeview = self._wTree.get_widget("files_list")
+
+        treeview.set_model(liststore)
+
+        for elem in self._files_list:
+            liststore.append([os.path.basename(str(elem))])
+
+        cols = treeview.get_columns()
+        for i in cols:
+            treeview.remove_column(i)
+
+        treeviewcol = gtk.TreeViewColumn("Modelos")
+        treeview.append_column(treeviewcol)
+        cell = gtk.CellRendererText()
+        treeviewcol.pack_start(cell)
+        treeviewcol.add_attribute(cell, "text", 0)
+
+    def _remove_from_statusbar(self, context_id, msg_id):
+        """Remueve el mensaje definido por context_id y msg_id.
+
+        Retorna False para que gobject.timeout_add deje de llamar a la funcion"""
+        statusbar = self._wTree.get_widget("statusbar")
+        statusbar.remove(context_id, msg_id)
+
+        return False #stop being called by gobject.timeout_add
+
     def _construct_toolbar(self):
         "Construye la barra de herramientas y el menu usando GtkUIManager"
         log.debug("Constructing the toolbar")
@@ -1364,13 +1640,13 @@ class ViewMainWindow:
         action_group.add_actions([#TODO:finish actions
             ('File', None, '_Archivo', None, None, None),
             ('NewLogicalModel', gtk.STOCK_NEW, 'Nuevo modelo lógico', '<Control>n', None,
-             self.on_new_model),
+             self._on_new_model),
             ('OpenModel', gtk.STOCK_OPEN, None, '<Control>o', None,
              self.on_open_model),
             ('Save', gtk.STOCK_SAVE, None, '<Control>s', None,
-             self.on_save_model),
+             self._on_save_model),
             ('SaveAs', gtk.STOCK_SAVE_AS, None, None, None,
-             self.on_save_model),
+             self.on_save_model_as),
             ('Print', gtk.STOCK_PRINT, None, '<Control>p', None,
              self.on_btn_print_clicked),
             ('CloseModel', gtk.STOCK_CLOSE, 'Cerrar Modelo', '<Control>w', None,
@@ -1413,7 +1689,7 @@ class ViewMainWindow:
             ('Rectangle', gtk.STOCK_MISSING_IMAGE, 'Rectangulo', None, None,
              self.on_add_relationship_clicked),
             ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, None,
-             self.on_zoomin_clicked),
+             self._on_zoomin_clicked),
             ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, None,
              self.on_zoomout_clicked),
             ('SendToBack', gtk.STOCK_GO_DOWN, 'Enviar atras', None, None,
@@ -1433,208 +1709,6 @@ class ViewMainWindow:
         toolbar = self._uimanager.get_widget("/toolbar")
         box.pack_start(toolbar, False)
         box.reorder_child(toolbar, 1)
-
-    # signals
-
-    def _on_delete_main_window(self, widget, event):
-        "callback conectado al evento 'delete' de la ventana principal"
-
-        widget = self._uimanager.get_widget("/menubar/File/Quit")
-
-        widget.activate()
-        return True
-
-    def _on_quit_selected(self, menuitem):
-        "callback conectado a la opcion salir de la aplicacion"
-        dialog = gtk.Dialog("Salir",
-                            self._window,
-                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                             gtk.STOCK_QUIT, gtk.RESPONSE_ACCEPT))
-
-        box = gtk.HBox()
-
-        widget = gtk.Image()
-        widget.set_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_DIALOG)
-        box.pack_start(widget)
-
-        widget = gtk.Label("¿Desea salir y perder todos los cambios efectuados?")
-        box.pack_start(widget)
-
-        box.show_all()
-        dialog.vbox.pack_start(box)
-
-        response = dialog.run()
-        dialog.destroy()
-
-        if response == gtk.RESPONSE_ACCEPT:
-            self._control.quit()
-
-    def _on_new_project(self, menuitem):
-        self._files_list = self._control.create_new_project()
-        self._reload_files_list()
-
-    def on_new_model(self, menuitem):
-        aux = self._control.create_new_logical_model()
-        print "HOLA ", aux
-        if aux == None:
-            statusbar = self._wTree.get_widget("statusbar")
-            context_id = statusbar.get_context_id("Model not created")
-            msg_id = statusbar.push(context_id, "Cancelada la creación de un nuevo modelo lógico")
-            gobject.timeout_add(10000,self._remove_from_statusbar,context_id, msg_id)
-        else:
-            print aux
-            self._files_list = aux
-            self._reload_files_list()
-
-    def _on_open_project(self, menuitem):
-
-        # obtain the list of models associated to the project
-        self._files_list = self._control.open_project(path=None)
-        self._reload_files_list()
-
-    def _on_save_project(self, menuitem):
-        answer = self._control.save_project()
-        statusbar = self._wTree.get_widget("statusbar")
-        context_id = statusbar.get_context_id("save project")
-        if answer:
-            msg_id = statusbar.push(context_id, "El proyecto ha sido guardado exitosamente")
-        else:
-            msg_id = statusbar.push(context_id, "El proyecto no ha podido ser guardado")
-
-        gobject.timeout_add(10000, self._remove_from_statusbar, context_id, msg_id)
-
-    def on_open_model(self, menuitem):
-        pass
-
-    def on_save_model(self, menuitem):
-        pass
-
-    def on_add_model_to_project(self, menuitem):
-        pass
-
-    def on_remove_model(self, menuitem): #remove the model from the project
-        pass
-
-    def on_delete_model(self, menuitem):
-        pass
-
-    #on the close button of the gtk.Notebook page is clicked
-    def on_close_file_clicked(self, menuitem):
-        pass
-
-    def _on_add_entity_clicked(self, menuitem):
-        item = self._control.add_entity(0,0)
-        self._canvas_list[0].add_child(item)
-
-    def on_add_relationship_clicked(self, menuitem):
-        pass
-
-    def on_add_inheritance_clicked(self, menuitem):
-        pass
-
-    def _on_add_label_clicked(self, menuitem):
-        #self._control.add_label()
-        pass
-
-    def on_add_rectangle_clicked(self,menuitem):
-        pass
-
-    #aqui se debe chequear el tipo de componente grafico que se quiere editar
-    #para luego hacer la llamada al método correspondiente
-    def on_edit_component(self, item, target_item, event):
-        pass
-
-    def on_delete_component(self, item, target_item, event):
-        pass
-
-    #callbacks usados por el uimanager
-    def on_delete_component_clicked(self, menuitem):
-        pass
-
-    def on_edit_component_clicked(self, menuitem):
-        pass
-
-    def on_generate_physical_model_clicked(self, menuitem):
-        pass
-
-    def on_btn_print_clicked(self, menuitem):
-        pass
-
-    def on_btn_export_clicked(self, menuitem):
-        pass
-
-    def on_zoomin_clicked(self, menuitem):
-        pass
-
-    def on_zoomout_clicked(self, menuitem):
-        pass
-
-    def on_btn_send_to_back_clicked(self, menuitem):
-        pass
-
-    def on_btn_send_to_front_clicked(self, menuitem):
-        pass
-
-    def on_edit_preferences_clicked(self, menuitem):
-        pass
-
-    def on_show_help_clicked(self, menuitem):
-        pass
-
-    def on_about_clicked(self, menuitem):
-        pass
-
-    def _on_files_list_row_activated(self, treeview, path, view_column):
-
-        new_canvas = self._control.construct_model(self._files_list[path[0]])
-
-        if new_canvas == None:
-            return
-
-        hbox = gtk.HBox()
-        widget = gtk.Label(os.path.basename(self._files_list[path[0]]))
-        hbox.pack_start(widget)
-
-        widget = gtk.Button()
-        hbox.pack_start(widget)
-        img = gtk.Image()
-        img.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
-        widget.add(img)
-
-        hbox.show_all()
-
-        ntbk = self._wTree.get_widget("ntbk_main")
-
-        ntbk.append_page(new_canvas.scrolled_win, hbox)
-        ntbk.set_current_page(-1)
-
-    def _reload_files_list(self):
-        "Debe ser llamada cada vez que la lista de archivos cambie (files_list)"
-        liststore = gtk.ListStore(gobject.TYPE_STRING)
-        treeview = self._wTree.get_widget("files_list")
-
-        treeview.set_model(liststore)
-
-        for elem in self._files_list:
-            liststore.append([os.path.basename(str(elem))])
-
-        cols = treeview.get_columns()
-        for i in cols:
-            treeview.remove_column(i)
-
-        treeviewcol = gtk.TreeViewColumn("Modelos")
-        treeview.append_column(treeviewcol)
-        cell = gtk.CellRendererText()
-        treeviewcol.pack_start(cell)
-        treeviewcol.add_attribute(cell, "text", 0)
-
-    def _remove_from_statusbar(self, context_id, msg_id):
-        statusbar = self._wTree.get_widget("statusbar")
-        statusbar.remove(context_id, msg_id)
-
-        return False #stop being called by gobject.timeout_add
-
 
     def get_window(self):
         "retorna la ventana principal, para ser utilizada en los dialogos como ventana padre"

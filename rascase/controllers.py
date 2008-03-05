@@ -88,9 +88,12 @@ class ControlEntityComponent:
         self._entity_model = entity_model
         self._view = EntityComponent(entity_model.get_name(),
                                      entity_model.get_x(),
-                                     entity_model.get_y())
+                                     entity_model.get_y(),
+                                     entity_model.get_width(),
+                                     entity_model.get_height())
 
-        self._view.set_fillcolor(entity_model.get_fillcolor())
+        self._view.set_fillcolor(self._entity_model.get_fillcolor())
+        self._view.set_linecolor(self._entity_model.get_linecolor())
 
         for attribute in entity_model.get_attributes():
             aux_dt = (LogicalDataType.to_string(attribute.get_data_type()),)
@@ -104,6 +107,8 @@ class ControlEntityComponent:
             self._view.add_attribute(view_attr)
 
         self._view.connect("on-double-click", self._on_edit_selected)
+        self._view.connect("on-movement", self._on_movement)
+        self._view.connect("changed-dimensions", self._on_changed_dimensions)
 
     def add_attribute(self, attribute_model=None):
         if attribute_model == None:
@@ -136,6 +141,21 @@ class ControlEntityComponent:
 
         for attr in self._view.attr_list:
             attr.refresh()
+
+    def _on_movement(self, item):
+        new_x = item.get_x()
+        new_y = item.get_y()
+
+        self._entity_model.set_x(float(new_x))
+        self._entity_model.set_y(float(new_y))
+
+    def _on_changed_dimensions(self, item):
+
+        new_height = float(item.get_height())
+        new_width = float(item.get_width())
+
+        self._entity_model.set_height(new_height)
+        self._entity_model.set_width(new_width)
 
 class ControlRelationshipComponent:
     def __init__(self):
@@ -289,6 +309,20 @@ class ControlMainWindow:
     def save_project(self):
         "Almacena el proyecto"
         return self._project.save()
+
+    def save_model(self, modelpath, new_modelpath=None):
+        """Almancena el modelo identificado por modelpath, en caso de que new_modelpath sea distinto de None
+        se almacena el model identificado por modelpath en la nueva ruta definida por new_modelpath"""
+
+        model = self._project.get_model(modelpath)
+        if model == None:
+            log.debug("Trying to save a non existing model")
+            return False
+
+        if new_modelpath != None:
+            model.save(new_modelpath)
+        else:
+            model.save()
 
     def open_logical_model(self, path):
         pass

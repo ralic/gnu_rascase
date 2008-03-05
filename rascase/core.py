@@ -121,14 +121,14 @@ class LogicalBase:
 class RectBase:
     def __init__(self):
         #TODO: define the default colors
-        self._linecolor = None
-        self._linewidth = None
-        self._fillcolor = None
-        self._width = None
-        self._height = None
-        self._pos_x = None
-        self._pos_y = None
-        self._dragbox = None #creo que esto no es necesario, pk ni siquiera para que lo puse :P
+        self._linecolor = int('000000', 16)
+        self._linewidth = 1.0
+        self._fillcolor = int('FF0000', 16)
+        self._width = 100
+        self._height = 100
+        self._pos_x = 0
+        self._pos_y = 0
+        #self._dragbox = None #creo que esto no es necesario, pk ni siquiera para que lo puse :P
 
     def set_linecolor(self, value):
         "Define el color de la linea del rectangulo"
@@ -541,6 +541,7 @@ class LogicalModel(ModelBase):
             self._path = path
 
         # write the xml into a file
+
         xml.dom.ext.PrettyPrint(doc, open(self._path, "w"))
 
 
@@ -564,8 +565,9 @@ class Entity(LogicalBase, RectBase):
             self.set_y(xmlnode.getAttributeNS(XML_URI, "y"))
 
             #get the dimentions of the entity
-            self.set_height(xmlnode.getAttributeNS(XML_URI, "height"))
-            self.set_width(xmlnode.getAttributeNS(XML_URI, "width"))
+
+            self.set_height(float(xmlnode.getAttributeNS(XML_URI, "height")))
+            self.set_width(float(xmlnode.getAttributeNS(XML_URI, "width")))
 
             #get the visual properties of the entity
             self.set_linecolor(xmlnode.getAttributeNS(XML_URI, "linecolor"))
@@ -604,21 +606,21 @@ class Entity(LogicalBase, RectBase):
     def to_xml(self, doc, uri):
         "Transforma la información que almacena el objeto en un nodo xml y lo retorna"
 
-        entity = doc.createElementNS(uri, "entity")
+        entity = doc.createElementNS(uri, "ras:entity")
 
-        entity.setAttributeNS(uri, "name", self.get_name())
-        entity.setAttributeNS(uri, "codename", self.get_codename())
-        entity.setAttributeNS(uri, "description", self.get_description())
+        entity.setAttributeNS(uri, "ras:name", self.get_name())
+        entity.setAttributeNS(uri, "ras:codename", self.get_codename())
+        entity.setAttributeNS(uri, "ras:description", self.get_description())
 
-        entity.setAttributeNS(uri, "x", self.get_x())
-        entity.setAttributeNS(uri, "y", self.get_y())
+        entity.setAttributeNS(uri, "ras:x", str(self.get_x()))
+        entity.setAttributeNS(uri, "ras:y", str(self.get_y()))
 
-        entity.setAttributeNS(uri, "height", self.get_height())
-        entity.setAttributeNS(uri, "width", self.get_width())
+        entity.setAttributeNS(uri, "ras:height", str(self.get_height()))
+        entity.setAttributeNS(uri, "ras:width", str(self.get_width()))
 
-        entity.setAttributeNS(uri, "linecolor", self.get_linecolor())
-        entity.setAttributeNS(uri, "linewidth", self.get_linewidth())
-        entity.setAttributeNS(uri, "fillcolor", self.get_fillcolor())
+        entity.setAttributeNS(uri, "ras:linecolor", str(self.get_linecolor()))
+        entity.setAttributeNS(uri, "ras:linewidth", str(self.get_linewidth()))
+        entity.setAttributeNS(uri, "ras:fillcolor", str(self.get_fillcolor()))
 
         for i in range(len(self._attributes_list)):
             log.debug("to xml %s.%s", self.get_codename(),
@@ -789,17 +791,17 @@ class Relationship(LogicalBase):
         objeto para que luego pueda ser recontruido
 
         """
-        relation = doc.createElementNS(uri, "relationship")
+        relation = doc.createElementNS(uri, "ras:relationship")
 
-        relation.setAttributeNS(uri, "name", self.get_name())
-        relation.setAttributeNS(uri, "codename", self.get_codename())
-        relation.setAttributeNS(uri, "description", self.get_description())
+        relation.setAttributeNS(uri, "ras:name", self.get_name())
+        relation.setAttributeNS(uri, "ras:codename", self.get_codename())
+        relation.setAttributeNS(uri, "ras:description", self.get_description())
 
-        relation.setAttributeNS(uri, "cardinality", self.get_cardinality())
-        relation.setattributens(uri, "entity1", self.get_entity1().get_codename())
-        relation.setattributens(uri, "entity2", self.get_entity2().get_codename())
+        relation.setAttributeNS(uri, "ras:cardinality", self.get_cardinality())
+        relation.setattributens(uri, "ras:entity1", self.get_entity1().get_codename())
+        relation.setattributens(uri, "ras:entity2", self.get_entity2().get_codename())
 
-        relation.setattributens(uri, "linecolor", self.get_linecolor())
+        relation.setattributens(uri, "ras:linecolor", self.get_linecolor())
 
         return relation #returns the xml node to be added to the document
 
@@ -869,16 +871,16 @@ class Inheritance(LogicalBase):
         self._linecolor = value
 
     def to_xml(self, doc, uri):
-        inheritance = doc.createElementNS(uri, "inheritance")
+        inheritance = doc.createElementNS(uri, "ras:inheritance")
 
-        inheritance.setAttributeNS(uri, "name", self.get_name())
-        inheritance.setAttributeNS(uri, "codename", self.get_codename())
-        inheritance.setAttributeNS(uri, "name", self.get_description())
+        inheritance.setAttributeNS(uri, "ras:name", self.get_name())
+        inheritance.setAttributeNS(uri, "ras:codename", self.get_codename())
+        inheritance.setAttributeNS(uri, "ras:name", self.get_description())
 
-        inheritance.setAttributeNS(uri, "father", self.get_father().get_codename())
-        inheritance.setAttributeNS(uri, "son", self.get_son().get_codename())
+        inheritance.setAttributeNS(uri, "ras:father", self.get_father().get_codename())
+        inheritance.setAttributeNS(uri, "ras:son", self.get_son().get_codename())
 
-        inheritance.setAttributeNS(uri, "linecolor", self.get_linecolor())
+        inheritance.setAttributeNS(uri, "ras:linecolor", self.get_linecolor())
 
         return inheritance #returns the xml node
 
@@ -1045,22 +1047,22 @@ class Label(RectBase):
     def to_xml(self, doc, uri):
         "Transforma la informacion que almacena el objeto en un nodo xml y lo retorna"
 
-        label = doc.createElementNS(uri, "label")
+        label = doc.createElementNS(uri, "ras:label")
 
         #text
-        textelement = doc.createElementNS(uri, "text")
+        textelement = doc.createElementNS(uri, "ras:text")
         textelement.appendChild(doc.createTextNode(self.get_text()))
         label.appendChild(textelement)
 
-        label.setAttributeNS(uri, "linecolor", self.get_linecolor())
-        label.setAttributeNS(uri, "fillcolor", self.get_fillcolor())
-        label.setAttributeNS(uri, "linewidth", self.get_fillcolor())
+        label.setAttributeNS(uri, "ras:linecolor", self.get_linecolor())
+        label.setAttributeNS(uri, "ras:fillcolor", self.get_fillcolor())
+        label.setAttributeNS(uri, "ras:linewidth", self.get_fillcolor())
 
-        label.setAttributeNS(uri, "width", self.get_width())
-        label.setAttributeNS(uri, "height", self.get_height())
+        label.setAttributeNS(uri, "ras:width", self.get_width())
+        label.setAttributeNS(uri, "ras:height", self.get_height())
 
-        label.setAttributeNS(uri, "x", self.get_x())
-        label.setAttributeNS(uri, "y", self.get_y())
+        label.setAttributeNS(uri, "ras:x", self.get_x())
+        label.setAttributeNS(uri, "ras:y", self.get_y())
 
         return label #return the node to be added to a xml document
 
