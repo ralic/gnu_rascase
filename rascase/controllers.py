@@ -37,16 +37,7 @@ def start():
     salvo por el script generado por setuptools
 
     """
-    # this code was taken from exaile <http://www.exaile.org>
-    if sys.platform == 'linux2':
-        # Set process name.  Only works on Linux >= 2.1.57.
-        try:
-            import dl
-            libc = dl.open('/lib/libc.so.6')
-            libc.call('prctl', 15, 'rascase\0', 0, 0, 0) # 15 is PR_SET_NAME
-        except:
-            pass
-    # end exaile code
+    gobject.set_prgname("rascase")
 
     #setup the logging system
 
