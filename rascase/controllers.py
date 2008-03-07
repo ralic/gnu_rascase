@@ -96,15 +96,15 @@ class ControlEntityComponent:
         self._view.set_linecolor(self._entity_model.get_linecolor())
 
         for attribute in entity_model.get_attributes():
-            aux_dt = (LogicalDataType.to_string(attribute.get_data_type()),)
 
             view_attr = AttributeComponent(name=attribute.get_name(),
-                                           datatype=aux_dt,
+                                           datatype=attribute.get_data_type(),
                                            default_value=attribute.get_default_value(),
                                            pk=attribute.is_primary_key(),
                                            mandatory=attribute.is_mandatory())
 
             self._view.add_attribute(view_attr)
+            view_attr.set_data("model", attribute)
 
         self._view.connect("on-double-click", self._on_edit_selected)
         self._view.connect("on-movement", self._on_movement)
@@ -138,7 +138,7 @@ class ControlEntityComponent:
     def refresh(self):
         self._view.set_title(self._entity_model.get_name())
         self._view.refresh()
-
+        print self._view.attr_list
         for attr in self._view.attr_list:
             attr.refresh()
 
@@ -344,8 +344,19 @@ class ControlMainWindow:
 
         return entity_control._view
 
-    def add_relationship(self, model, entity1, entity2):
-        pass
+    def add_relationship(self, modelpath, entity1, entity2, cardinality, name, codename, description):
+        model = self._project.get_model(modelpath)
+
+        relationship = Relationship(entity1=entity1, entity2=entity2)
+
+        relationship.set_cardinality(cardinality)
+        relationship.set_name(name)
+        relationship.set_codename(codename)
+        relationship.set_description(description)
+
+        model.add_relationship(relationship)
+
+        ControlRelationshipComponent(relationship)
 
     def add_inheritance(self, model, father, son):
         pass
@@ -401,6 +412,15 @@ class ControlMainWindow:
     def new_model(self):
         pass
 
+    def get_all_entities(self, modelpath):
+        model = self._project.get_model(modelpath)
+
+        aux_list = list()
+        for entity in model.get_all_entities():
+            aux_list.append((entity.get_name(), entity.get_codename()))
+
+        return aux_list
+
     def quit(self):
         log = logging.getLogger('controllers')
         log.info("Quiting...")
@@ -411,7 +431,7 @@ class ControlMainWindow:
 
         canvas = Canvas()
 
-        for entity in logical_model.get_all_entites():
+        for entity in logical_model.get_all_entities():
             aux_item = ControlEntityComponent(entity)
             canvas.add_child(aux_item._view)
 

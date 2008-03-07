@@ -38,6 +38,7 @@
     <toolitem action="NewLogicalModel"/>
     <toolitem action="OpenModel"/>
     <toolitem action="Save"/>
+    <toolitem action="CloseModel"/>
     <separator/>
     <toolitem action="Print"/>
     <separator/>

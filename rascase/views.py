@@ -220,8 +220,8 @@ class RectBaseComponent(goocanvas.Group):
         fleur = gtk.gdk.Cursor(gtk.gdk.FLEUR)
         canvas = item.get_canvas ()
         canvas.pointer_grab(item,
-                        gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.BUTTON_RELEASE_MASK,
-                        fleur, event.time)
+                            gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.BUTTON_RELEASE_MASK,
+                            fleur, event.time)
         self.drag_x = event.x
         self.drag_y = event.y
         return True
@@ -710,14 +710,14 @@ class AttributeComponent(gobject.GObject):
                 text_m = ""
             self.items['mandatory'].set_property("text", text_m)
 
+        self._name = mod.get_name()
+        self._primary_key = mod.is_primary_key()
+        if self._primary_key:
+            text_name = "<u>" + self._name + "</u>"
+        else:
+            text_name = self._name
 
-        if mod.is_primary_key() != self._primary_key:
-            self._primary_key = mod.is_primary_key()
-            if self._primary_key:
-                text_name = "<u>" + self._name + "</u>"
-            else:
-                text_name = self._name
-            self.items['name'].set_property("text", text_name)
+        self.items['name'].set_property("text", text_name)
 
         #FIXME: this should not happen, the controller must do this
         dt_changed = False
@@ -741,8 +741,8 @@ class AttributeComponent(gobject.GObject):
             self.items['datatype'].set_property("text", text_dt)
 
         #trick to update the view
-        for item in self.items:
-            item.translate(0,0)
+        for key in self.items.keys():
+            self.items[key].translate(0,0)
 
     def set_primary_key (self, valor) :
         self._primary_key = valor
@@ -1070,10 +1070,11 @@ class ViewEditEntity:
                                         gobject.TYPE_BOOLEAN,#6 pk
                                         gobject.TYPE_BOOLEAN,#7 mandatory
                                         gobject.TYPE_STRING, #8 description
-                                        object)              #9 el atributo
+                                        object)              #9 el objeto atributo
 
-        self._datatypes_store = gtk.ListStore(gobject.TYPE_STRING,
-                                              gobject.TYPE_INT)
+        self._datatypes_store = gtk.ListStore(gobject.TYPE_STRING,# 0 datatype NAME
+                                              gobject.TYPE_INT)   # 1 datatype CODE
+
         from rascase.core import LogicalDataType
         for dt in LogicalDataType.get_data_types():
             self._datatypes_store.append([LogicalDataType.to_string(dt), dt])
@@ -1081,19 +1082,20 @@ class ViewEditEntity:
         for attr in self._entity.get_attributes():
 
             if len(attr.get_data_type()) > 1:
-                dt_length = attr.get_data_type()[1]
+                dt_length = int(attr.get_data_type()[1])
             else:
-                dt_length = 0
+                dt_length = int(0)
 
-            self._attr_list.append([attr.get_name(),
-                                    attr.get_codename(),
-                                    attr.get_data_type()[0],
-                                    LogicalDataType.to_string(attr.get_data_type()),
+            self._attr_list.append([str(attr.get_name()),
+                                    str(attr.get_codename()),
+                                    int(attr.get_data_type()[0]),
+                                    str(LogicalDataType.to_string(attr.get_data_type()[0])),
                                     self._datatypes_store,
                                     dt_length,
                                     attr.is_primary_key(),
                                     attr.is_mandatory(),
-                                    attr.get_description()])
+                                    attr.get_description(),
+                                    attr])
 
         tree_attributes.set_model(self._attr_list)
 
@@ -1128,6 +1130,7 @@ class ViewEditEntity:
         #datatype length
         cell = gtk.CellRendererText()
         cell.set_property("editable", True)
+        cell.connect("edited", self._on_data_type_length)
         col_datatype.pack_start(cell)
         col_datatype.add_attribute(cell, "text", 5)
 
@@ -1135,6 +1138,7 @@ class ViewEditEntity:
         #pk
         cell = gtk.CellRendererToggle()
         cell.set_property("activatable", True)
+        cell.connect("toggled", self._on_pk_togled)
         col = gtk.TreeViewColumn("Identificador", cell)
         col.set_attributes(cell, active=6)
         tree_attributes.append_column(col)
@@ -1142,6 +1146,7 @@ class ViewEditEntity:
         #mandatory
         cell = gtk.CellRendererToggle()
         cell.set_property("activatable", True)
+        cell.connect("toggled", self._on_mandatory_togled)
         col = gtk.TreeViewColumn("Obligatorio", cell)
         col.set_attributes(cell, active=7)
         tree_attributes.append_column(col)
@@ -1151,6 +1156,7 @@ class ViewEditEntity:
         tree_attributes.append_column(col_name)
         cell = gtk.CellRendererText()
         cell.set_property("editable", True)
+        cell.connect("edited", self._on_description_edited)
         col_name.pack_start(cell)
         col_name.add_attribute(cell, "text", 8)
 
@@ -1187,10 +1193,72 @@ class ViewEditEntity:
                 iter_2 = self._attr_list.get_iter(path)
 
                 # TODO: debe actualizarse el object
+                attr = self._attr_list.get_value(iter_2, 9)
+                attr.set_data_type(self._datatypes_store.get_value(iter_, 1),
+                                   self._attr_list.get_value(iter_2, 5))
+
                 self._attr_list.set(iter_2, 2, self._datatypes_store.get_value(iter_, 1))
                 self._attr_list.set(iter_2, 3, value)
                 break
+
             iter_ = self._datatypes_store.iter_next(iter_)
+
+    def _on_data_type_length(self, cellrenderertext, path, new_text):
+
+        #if try to put a nondigit string in the entry
+        if not new_text.isdigit():
+            dialog = gtk.Dialog("Largo no valido",
+                     self._window,
+                     gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                     (gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+            hbox = gtk.HBox()
+
+            image = gtk.Image()
+            image.set_from_stock(gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_DIALOG)
+            hbox.pack_start(image)
+
+            label = gtk.Label("El largo de un tipo de dato debe ser numérico")
+            hbox.pack_start(label)
+
+            hbox.show_all()
+            dialog.vbox.pack_start(hbox)
+            dialog.run()
+            dialog.destroy()
+            return
+
+        iter_ = self._attr_list.get_iter(path)
+
+        attr = self._attr_list.get_value(iter_, 9)
+        attr.set_data_type(None, int(new_text))
+
+        if len(attr.get_data_type()) > 1:
+            self._attr_list.set(iter_, 5, int(attr.get_data_type()[1]))
+        else:
+            self._attr_list.set(iter_, 5, 0)
+
+    def _on_pk_togled(self, cellrenderertoggle, path):
+
+        iter_attr_list = self._attr_list.get_iter(path)
+
+        attr = self._attr_list.get_value(iter_attr_list, 9)
+        attr.set_primary_key(not attr.is_primary_key())
+        self._attr_list.set_value(iter_attr_list, 6, attr.is_primary_key())
+
+    def _on_mandatory_togled(self, cellrenderertoggle, path):
+
+        iter_attr_list = self._attr_list.get_iter(path)
+
+        attr = self._attr_list.get_value(iter_attr_list, 9)
+        attr.set_mandatory(not attr.is_mandatory())
+        self._attr_list.set_value(iter_attr_list, 7, attr.is_mandatory())
+
+    def _on_description_edited(self, cellrenderertext, path, new_text):
+        iter_ = self._attr_list.get_iter(path)
+
+        attr = self._attr_list.get_value(iter_, 9)
+        attr.set_description(new_text)
+
+        self._attr_list.set_value(iter_, 8, attr.get_description())
 
     def _on_new_attr_clicked(self, toolbutton):
         attr = self._control.get_new_attribute()
@@ -1459,9 +1527,35 @@ class ViewMainWindow:
     def on_delete_model(self, menuitem):
         pass
 
-    #on the close button of the gtk.Notebook page is clicked
-    def on_close_file_clicked(self, menuitem):
-        pass
+    #on the close of the menu
+    def _on_close_file_clicked(self, menuitem):
+        ntbk = self._wTree.get_widget("ntbk_main")
+
+        page_num = ntbk.get_current_page()
+
+        #if there is no pages a message is displayed in status bar
+        if page_num == -1:
+            statusbar = self._wTree.get_widget("statusbar")
+            context_id = statusbar.get_context_id("no pages in notebook")
+            msg_id = statusbar.push(context_id, "No hay modelo abierto")
+            gobject.timeout_add(5000,self._remove_from_statusbar,context_id, msg_id)
+            return
+
+        scrolled_win =ntbk.get_nth_page(page_num)
+
+        canvas = scrolled_win.get_data("canvas")
+        closed = False
+        for i in range(len(self._files_opened)):
+            if self._files_opened[i][1] == canvas:
+                ntbk.remove_page(page_num)
+                del self._files_opened[i]
+                break
+
+        statusbar = self._wTree.get_widget("statusbar")
+        context_id = statusbar.get_context_id("closing canvas")
+        msg_id = statusbar.push(context_id, "Modelo cerrado")
+        gobject.timeout_add(5000,self._remove_from_statusbar,context_id, msg_id)
+
 
     def _on_add_entity_clicked(self, menuitem):
 
@@ -1475,13 +1569,72 @@ class ViewMainWindow:
             if x[1] == canvas:
                 filepath = x[0]
                 break
-        print "filepath: ", filepath
+
         item = self._control.add_entity(0,0, filepath)
         canvas.add_child(item)
 
-    def on_add_relationship_clicked(self, menuitem):
+    #BEGIN ADD RELATIONSHIP#
+    def _on_add_relationship_clicked(self, menuitem):
+        modelpath = self._get_current_path()
+        entities_list = self._control.get_all_entities(modelpath)
+
+        window_glade = gtk.glade.XML(resource_filename('rascase.resources.glade', 'wndaddrelationship.glade'))
+        #indow = window_glade.get_widget("wndaddrelationship")
+
+        entities_store = gtk.ListStore(gobject.TYPE_STRING, #name
+                                       gobject.TYPE_STRING) #codename
+
+        for x in entities_list:
+            entities_store.append([x[0],x[1]])
+
+        #combobox for entity 1
+        combo = window_glade.get_widget("combo_entity1")
+        combo.set_model(entities_store)
+        cell = gtk.CellRendererText()
+        combo.pack_start(cell, True)
+        combo.add_attribute(cell, 'text', 0)
+
+        #combobox for entity 2
+        combo = window_glade.get_widget("combo_entity2")
+        combo.set_model(entities_store)
+        cell = gtk.CellRendererText()
+        combo.pack_start(cell, True)
+        combo.add_attribute(cell, 'text', 0)
+
+        #combox for cardinality types
+        cardinalities_store = gtk.ListStore(gobject.TYPE_STRING, #name
+                                            gobject.TYPE_INT)    #code
+
+        cardinalities_store.append(['1 a 1', 0])
+        cardinalities_store.append(['1 a N', 1])
+        cardinalities_store.append(['N a 1', 2])
+        cardinalities_store.append(['N a N', 3])
+
+        combo = window_glade.get_widget("combo_cardinality")
+        combo.set_model(cardinalities_store)
+        cell = gtk.CellRendererText()
+        combo.pack_start(cell)
+        combo.add_attribute(cell, 'text', 0)
+
+        button = window_glade.get_widget("btn_cancel")
+        button.connect("clicked", self._on_btn_cancel_relationship_clicked, window_glade)
+
+        button = window_glade.get_widget("btn_add")
+        button.connect("clicked", self._on_btn_add_relationship_clicked, window_glade)
+
+        win = window_glade.get_widget("wndaddrelationship")
+        win.set_transient_for(self._window)
+        win.show_all()
+
+    def _on_btn_cancel_relationship_clicked(self, button, window_glade):
+        win = window_glade.get_widget("wndaddrelationship")
+
+        win.destroy()
+
+    def _on_btn_add_relationship_clicked(self, button, window_glade):
         pass
 
+    #BEGIN ADD RELATIONSHIP#
     def on_add_inheritance_clicked(self, menuitem):
         pass
 
@@ -1582,19 +1735,20 @@ class ViewMainWindow:
 
         self._files_opened.append((self._files_list[path[0]],new_canvas))
 
-        hbox = gtk.HBox()
-        widget = gtk.Label(os.path.basename(self._files_list[path[0]]))
-        hbox.pack_start(widget)
+        ## hbox = gtk.HBox()
+        ## widget = gtk.Label(os.path.basename(self._files_list[path[0]]))
+        ## hbox.pack_start(widget)
 
-        widget = gtk.Button()
-        hbox.pack_start(widget)
-        img = gtk.Image()
-        img.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
-        widget.add(img)
+        ## button = gtk.Button()
+        ## hbox.pack_start(button)
+        ## img = gtk.Image()
+        ## img.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
+        ## button.add(img)
 
-        hbox.show_all()
-
-        ntbk.append_page(new_canvas.scrolled_win, hbox)
+        ## button.connect("clicked", self._on_btn_close_model_clicked)
+        ## hbox.show_all()
+        label = gtk.Label(os.path.basename(self._files_list[path[0]]))
+        ntbk.append_page(new_canvas.scrolled_win, label)
         ntbk.set_current_page(-1)
 
     def _reload_files_list(self):
@@ -1650,7 +1804,7 @@ class ViewMainWindow:
             ('Print', gtk.STOCK_PRINT, None, '<Control>p', None,
              self.on_btn_print_clicked),
             ('CloseModel', gtk.STOCK_CLOSE, 'Cerrar Modelo', '<Control>w', None,
-             self.on_close_file_clicked),
+             self._on_close_file_clicked),
             ('Quit', gtk.STOCK_QUIT, None, '<Control>q', None,
              self._on_quit_selected),
             ('Project', None, '_Proyecto', None, None, None),
@@ -1681,13 +1835,13 @@ class ViewMainWindow:
             ('Entity', gtk.STOCK_MISSING_IMAGE, 'Entidad', None, None,
              self._on_add_entity_clicked),
             ('Relationship', gtk.STOCK_MISSING_IMAGE, 'Relación', None, None,
-             self.on_add_relationship_clicked),
+             self._on_add_relationship_clicked),
             ('Inheritance', gtk.STOCK_MISSING_IMAGE, 'Herencia', None, None,
              self.on_add_inheritance_clicked),
             ('Label', gtk.STOCK_MISSING_IMAGE, 'Etiqueta', None, None,
              self._on_add_label_clicked),
             ('Rectangle', gtk.STOCK_MISSING_IMAGE, 'Rectangulo', None, None,
-             self.on_add_relationship_clicked),
+             self.on_add_rectangle_clicked),
             ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, None,
              self._on_zoomin_clicked),
             ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, None,
@@ -1709,6 +1863,23 @@ class ViewMainWindow:
         toolbar = self._uimanager.get_widget("/toolbar")
         box.pack_start(toolbar, False)
         box.reorder_child(toolbar, 1)
+
+    def _get_current_path(self):
+
+        ntbk = self._wTree.get_widget("ntbk_main")
+
+        child = ntbk.get_nth_page(ntbk.get_current_page())
+
+        if child == None:
+            return None
+
+        canvas = child.get_data("canvas")
+
+        for x in self._files_opened:
+            if x[1] == canvas:
+                return x[0]
+
+        return None
 
     def get_window(self):
         "retorna la ventana principal, para ser utilizada en los dialogos como ventana padre"

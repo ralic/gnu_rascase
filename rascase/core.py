@@ -491,7 +491,7 @@ class LogicalModel(ModelBase):
         else:
             return False
 
-    def get_all_entites(self):
+    def get_all_entities(self):
         "Retorna una lista de entidades asociadas al modelo logico"
         return self._entities_list
 
@@ -574,6 +574,11 @@ class Entity(LogicalBase, RectBase):
             self.set_linewidth(xmlnode.getAttributeNS(XML_URI, "linewidth"))
             self.set_fillcolor(xmlnode.getAttributeNS(XML_URI, "fillcolor"))
 
+            for node in xmlnode.getElementsByTagNameNS(XML_URI, "attribute"):
+                print node
+                attr = Attribute(xmlnode=node)
+                self.add_attribute(attr)
+
         else: # TODO: terminar de definir las opciones por defecto
             config = ConfigurationManager()
             self.set_fillcolor(config.get_entity_color())
@@ -650,12 +655,25 @@ class Attribute(LogicalBase):
             self.set_codename(xmlnode.getAttributeNS(XML_URI, "codename"))
             self.set_description(xmlnode.getAttributeNS(XML_URI, "description"))
 
-            self.set_primary_key(xmlnode.getAttributeNS(XML_URI, "pk"))
-            self.set_data_type(xmlnode.getAttributeNS(XML_URI, "datatype"))
-            self._data_type_length = xmlnode.getAttributeNS(XML_URI,
-                                                            "datatypelength")
+            pk = xmlnode.getAttributeNS(XML_URI, "pk")
+            if pk == 'True':
+                self.set_primary_key(True)
+            elif pk == 'False':
+                self.set_primary_key(False)
+            else:
+                log.error("could not set pk in the attribute %s", self.get_codename())
+
+            self.set_data_type(int(xmlnode.getAttributeNS(XML_URI, "datatype")),
+                               int(xmlnode.getAttributeNS(XML_URI, "datatypelength")))
             self.set_default_value(xmlnode.getAttributeNS(XML_URI, "defaultvalue"))
-            self.set_mandatory(xmlnode.getAttributeNS(XML_URI, "mandatory"))
+
+            mandatory = xmlnode.getAttributeNS(XML_URI, "mandatory")
+            if mandatory == 'True':
+                self.set_mandatory(True)
+            elif mandatory == 'False':
+                self.set_mandatory(False)
+            else:
+                log.error("could not set mandatory in the attribute %s", self.get_codename())
 
         else:
             self.set_name("Atributo " + str(Attribute.counter))
@@ -663,8 +681,6 @@ class Attribute(LogicalBase):
             self.set_description("Sin descripción")
 
             Attribute.counter += 1
-
-
 
     def set_primary_key(self, value):
         self._primary_key = value
@@ -688,11 +704,12 @@ class Attribute(LogicalBase):
         VARCHAR(25) => set_datatype(datatype=LogicalDataType.VARCHAR, length=25)
 
         """
-        self._data_type = int(datatype)
+        if datatype != None:
+            self._data_type = int(datatype)
 
         #TODO: es necesario revisar si el tipo de dato soporta la opcion length
         # y solamente setearla cuando corresponde
-        if length != None:
+        if length != None and length != -1:
             self._data_type_length = str(length)
         else:
             self._data_type_length = None
@@ -708,6 +725,26 @@ class Attribute(LogicalBase):
 
     def is_mandatory(self):
         return self._mandatory
+
+    def to_xml(self, doc, uri):
+        attr = doc.createElementNS(uri, "ras:attribute")
+
+        attr.setAttributeNS(uri, "ras:name", str(self.get_name()))
+        attr.setAttributeNS(uri, "ras:codename", str(self.get_codename()))
+        attr.setAttributeNS(uri, "ras:description", str(self.get_description()))
+
+        attr.setAttributeNS(uri, "ras:pk", str(self.is_primary_key()))
+        attr.setAttributeNS(uri, "ras:mandatory", str(self.is_mandatory()))
+
+        attr.setAttributeNS(uri, "ras:datatype", str(self.get_data_type()[0]))
+        if len(self.get_data_type()) > 1:
+            attr.setAttributeNS(uri, "ras:datatypelength", str(self.get_data_type()[1]))
+        else:
+            attr.setAttributeNS(uri, "ras:datatypelength", "-1")
+
+        attr.setAttributeNS(uri, "ras:defaultvalue", str(self.get_default_value()))
+
+        return attr
 
 
 class Relationship(LogicalBase):
@@ -745,6 +782,9 @@ class Relationship(LogicalBase):
 
         elif (entity1 != None) and (entity2 != None):
             log.debug("Constructing a relationship using the default values")
+            self.set_entity1(entity1)
+            self.set_entity2(entity2)
+
             config = ConfigurationManager()
             self.set_linecolor(config.get_relationship_color())
 
