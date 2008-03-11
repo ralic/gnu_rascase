@@ -38,6 +38,7 @@ def start():
 
     """
     gobject.set_prgname("rascase")
+    gobject.set_application_name("Rascase")
 
     #setup the logging system
 
@@ -82,6 +83,8 @@ class ControlEntityComponent:
                                      entity_model.get_y(),
                                      entity_model.get_width(),
                                      entity_model.get_height())
+
+        self._view.set_data("model", entity_model)
 
         self._view.set_fillcolor(self._entity_model.get_fillcolor())
         self._view.set_linecolor(self._entity_model.get_linecolor())
@@ -148,9 +151,44 @@ class ControlEntityComponent:
         self._entity_model.set_height(new_height)
         self._entity_model.set_width(new_width)
 
-class ControlRelationshipComponent:
-    def __init__(self):
-        pass
+class ControlRelationshipComponent(gobject.GObject):
+    def __init__(self, canvas, relationship_model):
+        gobject.GObject.__init__(self)
+        self._relationship_model = relationship_model
+
+        root_item = canvas.get_root_item()
+        view_entity1 = None
+        view_entity2 = None
+
+        for i in range(root_item.get_n_children()):
+            item = root_item.get_child(i)
+            if item.get_data("model") == relationship_model.get_entity1():
+                view_entity1 = item
+
+            if item.get_data("model") == relationship_model.get_entity2():
+                view_entity2 = item
+
+
+        #check if were founded the views
+        if (view_entity1 == None) or (view_entity2 == None):
+            log.error("Could not be found the entities views for\
+            entity 1: %s -> %s\
+            entity 2: %s -> %s",
+                      relationship_model.get_entity1(), view_entity1,
+                      relationship_model.get_entity2(), view_entity2)
+            raise RuntimeError("Could not be constructed the Object, \
+            watch the log for deatils")
+
+        self._view = RelationshipComponent(view_entity1,
+                                           relationship_model.is_dependent1(),
+                                           relationship_model.is_mandatory1(),
+                                           view_entity2,
+                                           relationship_model.is_dependent2(),
+                                           relationship_model.is_mandatory2(),
+                                           relationship_model.get_cardinality(),
+                                           relationship_model.get_linecolor())
+        canvas.add_child(self._view)
+
 
 class ControlInheritanceComponent:
     def __init__(self):
@@ -203,6 +241,65 @@ class ControlEditRectangle:
 
     def save(self):
         pass
+
+class ControlAddRelationship:
+    def __init__(self, maincontrol, modelpath, parent):
+        self._maincontrol = maincontrol
+        self._modelpath = modelpath
+        self._view = ViewAddRelationship(control=self,
+                                         parent=parent)
+
+    def get_all_entities(self):
+        """Retorna una lista de las entidades presentes en el modelo
+
+        La lista es de tuplas (nombre entidad, nombre codigo entidad)
+        """
+        return self._maincontrol.get_all_entities(self._modelpath)
+
+    def add(self, name, codename, description,
+            codename_entity1, dependent1, mandatory1,
+            codename_entity2, dependent2, mandatory2,
+            cardinality):
+
+        model = self._maincontrol._project.get_model(self._modelpath)
+        if model == None:
+            log.error("Could not get the model")
+            return False
+
+        ent1 = model.get_entity(codename_entity1)
+        if ent1 == None:
+            log.error("Troubles getting the entity %s", codename_entity1)
+            return False
+
+        ent2 = model.get_entity(codename_entity2)
+        if ent2 == None:
+            log.error("Trouble getting the entity %s", codename_entity2)
+            return False
+
+        relationship = Relationship(entity1=ent1, entity2=ent2)
+        #basic information for the relationship
+        relationship.set_name(name)
+        relationship.set_codename(codename)
+        relationship.set_description(description)
+
+        #for entity 1
+        relationship.set_dependent1(dependent1)
+        relationship.set_mandatory1(mandatory1)
+
+        #for entity 2
+        relationship.set_dependent2(dependent2)
+        relationship.set_mandatory2(mandatory2)
+
+        # cardinality
+        relationship.set_cardinality(cardinality)
+
+        if not model.add_relationship(relationship):
+            return False
+
+        canvas = self._maincontrol.get_canvas_from_path(self._modelpath)
+        control_relation = ControlRelationshipComponent(canvas, relationship)
+
+        return True
 
 class ControlMainWindow:
     def __init__(self):
@@ -335,19 +432,12 @@ class ControlMainWindow:
 
         return entity_control._view
 
-    def add_relationship(self, modelpath, entity1, entity2, cardinality, name, codename, description):
-        model = self._project.get_model(modelpath)
+    def add_relationship(self):
 
-        relationship = Relationship(entity1=entity1, entity2=entity2)
-
-        relationship.set_cardinality(cardinality)
-        relationship.set_name(name)
-        relationship.set_codename(codename)
-        relationship.set_description(description)
-
-        model.add_relationship(relationship)
-
-        ControlRelationshipComponent(relationship)
+        control_add = ControlAddRelationship(maincontrol=self,
+                                             modelpath=self._view.get_current_path(),
+                                             parent=self._view.get_window())
+        return True
 
     def add_inheritance(self, model, father, son):
         pass
@@ -427,14 +517,19 @@ class ControlMainWindow:
             canvas.add_child(aux_item._view)
 
         for relationship in logical_model.get_all_relationships():
-            aux_item = ControlRelationshipComponent(relationship)
-            canvas.add_child(aux_item._view)
+            aux_item = ControlRelationshipComponent(canvas, relationship)
 
         for inheritance in logical_model.get_all_inheritances():
             aux_item = ControlInheritanceComponent(inheritance)
             canvas.add_child(aux_item._view)
 
         return canvas
+
+    def get_canvas_from_path(self, filepath):
+        """Solo un wrapper para que un controlador secundario obtenga el canvas
+        asociado a un modelo
+        """
+        return self._view.get_canvas_from_path(filepath)
 
 class ControlSaveFileDialog:
     def __init__(self, action, project=None, model=None, title=None, parent=None, filter=None):
@@ -453,6 +548,7 @@ class ControlSaveFileDialog:
 
     def set_path(self, path):
         self._path = path
+
 
 if __name__=="__main__":
     start()

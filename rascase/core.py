@@ -210,10 +210,14 @@ class ConfigurationManager:
         return self._client.get_label_color(self._base_dir + '/label_color')
 
     def set_relationship_color(self, value):
-        self._client.set_string(self._base_dir + '/relationship_color', value)
+        self._client.set_string(self._base_dir+'/relationship_color', str(value))
 
     def get_relationship_color(self):
-        return self._client.get_string(self._base_dir + '/relationship_color')
+        color = self._client.get_string(self._base_dir + '/relationship_color')
+        if color == None:
+            color = int('ff0000ff', 16)
+
+        return int(color)
 
     def set_table_color(self, value):
         self._client.set_string(self._base_dir + '/table_color', value)
@@ -428,7 +432,7 @@ class LogicalModel(ModelBase):
         # Relationship
         for node in modelo.getElementsByTagNameNS(XML_URI, "relationship"):
             log.debug("construction a relationship")
-            relationship = Relationship(xmlnode=node)
+            relationship = Relationship(xmlnode=node, model=self)
             self._relationships_list.append(relationship)
 
         # Inheritance
@@ -494,6 +498,24 @@ class LogicalModel(ModelBase):
     def get_all_entities(self):
         "Retorna una lista de entidades asociadas al modelo logico"
         return self._entities_list
+
+    def add_relationship(self, relationship):
+        """Agrega una nueva relación al modelo
+
+        Revisa si la relacion existe previamente en el modelo, en caso de
+        existir no se agrega y retorna False, en caso contrario se agrega
+        y retorna True
+        """
+        if not isinstance(relationship, Relationship):
+            raise TypeError("Could not add an object that is not a Relationship \
+            instance")
+
+        for rel in self._relationships_list:
+            if rel.get_codename() == relationship.get_codename():
+                return False
+
+        self._relationships_list.append(relationship)
+        return True
 
     def get_all_relationships(self):
         "Retorna una lista de las relaciones asociadas al modelo logico"
@@ -756,24 +778,39 @@ class Relationship(LogicalBase):
 
     def __init__(self, entity1=None, entity2=None, xmlnode=None, model=None):
         LogicalBase.__init__(self)
-        self._cardinality = Relationship.CARDINALITY_1_N
-        self.set_entity1(entity1)
-        self.set_entity2(entity2)
 
-        if ((xmlnode != None) and (model != None)):
+        # default values
+        config = ConfigurationManager()
+        self._linecolor = int(config.get_relationship_color())
+        #entity 1
+        self._entity1 = None
+        self._dependent1 = False
+        self._mandatory1 = False
+
+        # entity 2
+        self._entity2 = None
+        self._dependent2 = False
+        self._mandatory2 = False
+
+        # cardinality
+        self._cardinality = Relationship.CARDINALITY_1_N
+
+        if (xmlnode != None) and (isinstance(model, LogicalModel)):
             log.debug("Constructing a relationship using a xml node")
             self.set_name(xmlnode.getAttributeNS(XML_URI, "name"))
             self.set_codename(xmlnode.getAttributeNS(XML_URI, "codename"))
             self.set_description(xmlnode.getAttributeNS(XML_URI, "description"))
 
-            self._cardinality = int(xmlnode.getAttributeNS(XML_URI, "cardinality"))
+            self.set_cardinality(xmlnode.getAttributeNS(XML_URI, "cardinality"))
 
-            self.set_entity1(model.get_entity(xmlnode.getAttributeNS(XML_URI, "entity1")))
+            ent = model.get_entity(xmlnode.getAttributeNS(XML_URI, "entity1"))
+            self.set_entity1(ent)
             if self.get_entity1() == None:
                 raise RuntimeError, "When creating a relationship from a xmlnode \
                 could not be located the entity 1 instance"
 
-            self.set_entity2(model.get_entity(xmlnode.getAttributeNS(XML_URI, "entity2")))
+            ent = model.get_entity(xmlnode.getAttributeNS(XML_URI, "entity2"))
+            self.set_entity2(ent)
             if self.get_entity2() == None:
                 raise RuntimeError, "When creating a relationship from a xmlnode \
                 could not be located the entity 2 instance"
@@ -807,7 +844,8 @@ class Relationship(LogicalBase):
 
     def set_entity1(self, entity):
         if not isinstance(entity, Entity):
-            raise RuntimeError, "Trying to add an object that it is not one"
+            raise RuntimeError("Trying to add an object that it is not one: "+\
+                               str(entity))
 
         self._entity1 = entity
 
@@ -816,15 +854,59 @@ class Relationship(LogicalBase):
 
     def set_entity2(self, entity):
         if not isinstance(entity, Entity):
-            raise RuntimeError, "Trying to add an object that it is not one"
+            raise RuntimeError("Trying to add an object that it is not one: "+\
+                               str(entity))
 
         self._entity2 = entity
 
     def get_entity2(self):
         return self._entity2
 
+    def is_dependent1(self):
+        return self._dependent1
+
+    def set_dependent1(self, value):
+        if isinstance(value, bool):
+            self._dependent1 = value
+        else:
+            raise TypeError("Trying to set dependent1 to a non bool value: " +\
+                            str(value))
+
+    def is_dependent2(self):
+        return self._dependent2
+
+    def set_dependent2(self, value):
+        if isinstance(value, bool):
+            self._dependent2 = value
+        else:
+            raise TypeError("Trying to set dependent2 to a non bool value: " +\
+                            str(value))
+
+    def is_mandatory1(self):
+        return self._mandatory1
+
+    def set_mandatory1(self, value):
+        if isinstance(value, bool):
+            self._mandatory1 = value
+        else:
+            raise TypeError("Trying to set mandatory2 to a non bool value: " +\
+                            str(value))
+
+    def is_mandatory2(self):
+        return self._mandatory1
+
+    def set_mandatory2(self, value):
+        if isinstance(value, bool):
+            self._mandatory2 = value
+        else:
+            raise TypeError("Trying to set mandatory2 to a non bool value: " +\
+                            str(value))
+
     def set_linecolor(self, value):
-        self._linecolor = value
+        self._linecolor = int(value)
+
+    def get_linecolor(self):
+        return self._linecolor
 
     def to_xml(self, doc, uri):
         """Construye un nodo xml que representa la informacion que almacena el
@@ -837,11 +919,15 @@ class Relationship(LogicalBase):
         relation.setAttributeNS(uri, "ras:codename", self.get_codename())
         relation.setAttributeNS(uri, "ras:description", self.get_description())
 
-        relation.setAttributeNS(uri, "ras:cardinality", self.get_cardinality())
-        relation.setattributens(uri, "ras:entity1", self.get_entity1().get_codename())
-        relation.setattributens(uri, "ras:entity2", self.get_entity2().get_codename())
+        relation.setAttributeNS(uri, "ras:cardinality",
+                                str(self.get_cardinality()))
+        relation.setAttributeNS(uri, "ras:entity1",
+                                self.get_entity1().get_codename())
 
-        relation.setattributens(uri, "ras:linecolor", self.get_linecolor())
+        relation.setAttributeNS(uri, "ras:entity2",
+                                self.get_entity2().get_codename())
+
+        relation.setAttributeNS(uri, "ras:linecolor", str(self.get_linecolor()))
 
         return relation #returns the xml node to be added to the document
 

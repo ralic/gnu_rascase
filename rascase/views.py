@@ -784,6 +784,10 @@ class AttributeComponent(gobject.GObject):
 
 
 class LineBaseComponent(goocanvas.Polyline):
+    __gsignals__ = {
+        'on-double-click': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+        }
+
     def __init__(self, **kargs):
         goocanvas.Polyline.__init__(self, **kargs)
 
@@ -804,7 +808,7 @@ class LineBaseComponent(goocanvas.Polyline):
     def get_linewidth(self):
         return self._line_width
 
-    def set_linecolor(self, value):
+    def set_line_color(self, value):
 
         if isinstance(value,str):
             self.set_property("stroke-color", value)
@@ -813,22 +817,37 @@ class LineBaseComponent(goocanvas.Polyline):
 
         self._line_color = value
 
-    def get_linecolor(self):
+    def get_line_color(self):
         return self._line_color
 
 class RelationshipComponent(LineBaseComponent):
-    def __init__(self, entity1, entity2, cardinality, dependent):
+    def __init__(self, entity1, dependent1, mandatory1,
+                 entity2, dependent2, mandatory2, cardinality, color):
 
-        self._cardinality = cardinality
-        self._dependent = dependent
+        #entity 1
         self._entity1 = entity1
-        self._entity2 = entity2
+        self._dependent1 = dependent1
+        self._mandatory1 = mandatory1
 
+        #entity 2
+        self._entity2 = entity2
+        self._dependent2 = dependent2
+        self._mandatory2 = mandatory2
+
+        #cardinality
+        self._cardinality = cardinality
+
+        LineBaseComponent.__init__(self,
+                                   can_focus=True,
+                                   points=self._build_points(),
+                                   stroke_color_rgba=color)
+
+        # signals connections
         self._entity1.connect("on-movement",self._on_entity_movement)
         self._entity2.connect("on-movement",self._on_entity_movement)
-
-        LineBaseComponent.__init__(self,points=self._build_points(),
-                                   stroke_color="black")
+        self.connect("button-press-event", self._on_button_press)
+        self.connect("focus-in-event", self._on_focus_in)
+        self.connect("focus-out-event", self._on_focus_out)
 
 
     def _build_points(self):
@@ -846,6 +865,8 @@ class RelationshipComponent(LineBaseComponent):
         y2 = self._entity2.get_y() + self._entity2.get_height()/2
 
         points_list.append((x1,y1))
+
+        #starts variations
 
         from rascase.core import Relationship
 
@@ -883,6 +904,8 @@ class RelationshipComponent(LineBaseComponent):
             p5 = (p2[0], p2[1])
             points_list.append(p5)
 
+        #finish variations
+
         points_list.append((x2,y2))
         ## p2_x = p1_x + 10
         ## p2_y = (y2-y1-x2+x1)/(y2-y1+x2-x1)*(p2_x-p1_x)+p1_y
@@ -909,9 +932,24 @@ class RelationshipComponent(LineBaseComponent):
     def get_entity2(self):
         return self._entity2
 
+    #signal callbacks
     def _on_entity_movement(self, item):
         "Este metodo es ejecutado cada vez que alguna de las entidades de la relacion emite la señal 'on-movement'"
         self.set_property("points", self._build_points())
+
+    def _on_button_press(self, item, target_item, event):
+        if event.type == gtk.gdk._2BUTTON_PRESS:
+            self.emit("on-double-click")
+            print "double click"
+
+        canvas = item.get_canvas()
+        canvas.grab_focus(item)
+
+    def _on_focus_in(self, item, target_item, event):
+        self.set_line_color(TANGO_COLOR_ORANGE_DARK)
+
+    def _on_focus_out(self, item, target_item, event):
+        self.set_line_color(int('000000ff',16))
 
 class InheritanceComponent(LineBaseComponent):
     def __init__(self, father, son, **kargs):
@@ -1387,11 +1425,300 @@ class ViewFileDialog:
 
         self._window.destroy()
 
+class ViewAddRelationship:
+    "Contiene la vista que es desplegada cuando el usuario selecciona agregar una nueva relación"
+    def __init__(self, control, parent):
+
+        self._control = control
+
+        entities_list = self._control.get_all_entities()
+
+        self._wTree = gtk.glade.XML(resource_filename('rascase.resources.glade',
+                                                      'wndaddrelationship.glade'))
+
+        entry = self._wTree.get_widget("entry_name")
+        entry.connect("changed", self._on_entry_name_changed)
+
+        self._window = self._wTree.get_widget("wndaddrelationship")
+        self._window.set_transient_for(parent)
+
+        entities_store = gtk.ListStore(gobject.TYPE_STRING, #name
+                                       gobject.TYPE_STRING) #codename
+
+        for x in entities_list:
+            entities_store.append([x[0],x[1]])
+
+        #combobox for entity 1
+        combo = self._wTree.get_widget("combo_entity1")
+        combo.set_model(entities_store)
+        cell = gtk.CellRendererText()
+        combo.pack_start(cell, True)
+        combo.add_attribute(cell, 'text', 0)
+
+        #dependent1
+        checkbox = self._wTree.get_widget("check1_dependent")
+        checkbox.connect("toggled", self._on_check_dependent_toggled)
+
+        #combobox for entity 2
+        combo = self._wTree.get_widget("combo_entity2")
+        combo.set_model(entities_store)
+        cell = gtk.CellRendererText()
+        combo.pack_start(cell, True)
+        combo.add_attribute(cell, 'text', 0)
+
+        #dependent2
+        checkbox = self._wTree.get_widget("check2_dependent")
+        checkbox.connect("toggled", self._on_check_dependent_toggled)
+
+        #combox for cardinality types
+        cardinalities_store = gtk.ListStore(gobject.TYPE_STRING, #name
+                                            gobject.TYPE_INT)    #code
+
+        cardinalities_store.append(['1 a 1', 0])
+        cardinalities_store.append(['1 a N', 1])
+        cardinalities_store.append(['N a 1', 2])
+        cardinalities_store.append(['N a N', 3])
+
+        combo = self._wTree.get_widget("combo_cardinality")
+        combo.set_model(cardinalities_store)
+        cell = gtk.CellRendererText()
+        combo.pack_start(cell)
+        combo.add_attribute(cell, 'text', 0)
+        combo.connect("changed", self._on_cardinality_changed)
+
+        button = self._wTree.get_widget("btn_cancel")
+        button.connect("clicked", self._on_btn_cancel_relationship_clicked)
+
+        button = self._wTree.get_widget("btn_add")
+        button.connect("clicked", self._on_btn_add_relationship_clicked)
+
+        self._window.show_all()
+
+    def _on_entry_name_changed(self, entry):
+        entry_codename = self._wTree.get_widget("entry_codename")
+
+        aux = entry.get_text().upper().replace(' ', '_')
+        entry_codename.set_text(aux)
+
+    def _on_cardinality_changed(self, combobox):
+        combo_model = combobox.get_model()
+        path_str = str(combobox.get_active())
+        iter_cardinality = combo_model.get_iter_from_string(path_str)
+
+        new_value = [combo_model.get_value(iter_cardinality, 0),#name
+                     combo_model.get_value(iter_cardinality, 1)]#code (int)
+
+        if new_value[1] == 0: # 1 a 1
+            #TODO: configure the dialog when te user selects 1 to 1 relation
+            pass
+
+        elif new_value[1] == 1: # 1 a N
+            #for entity 1
+            checkbox = self._wTree.get_widget("check1_dependent")
+            checkbox.set_active(False)
+            checkbox.set_sensitive(False)
+
+            checkbox = self._wTree.get_widget("check1_mandatory")
+            checkbox.set_sensitive(True)
+
+            #for entity 2
+            checkbox = self._wTree.get_widget("check2_dependent")
+            checkbox.set_sensitive(True)
+
+            checkbox = self._wTree.get_widget("check2_mandatory")
+            checkbox.set_active(True)
+            checkbox.set_sensitive(False)
+
+
+        elif new_value[1] == 2: # N a 1
+            #for entity 1
+            checkbox = self._wTree.get_widget("check1_dependent")
+            checkbox.set_sensitive(True)
+
+            checkbox = self._wTree.get_widget("check1_mandatory")
+            checkbox.set_active(True)
+            checkbox.set_sensitive(False)
+
+            #for entity 2
+            checkbox = self._wTree.get_widget("check2_dependent")
+            checkbox.set_active(False)
+            checkbox.set_sensitive(False)
+
+            checkbox = self._wTree.get_widget("check2_mandatory")
+            checkbox.set_sensitive(True)
+
+        elif new_value[1] == 3: # N a N
+            #for entity 1
+            checkbox = self._wTree.get_widget("check1_dependent")
+            checkbox.set_active(False)
+            checkbox.set_sensitive(False)
+
+            checkbox = self._wTree.get_widget("check1_mandatory")
+            checkbox.set_sensitive(True)
+
+            #for entity 2
+            checkbox = self._wTree.get_widget("check2_dependent")
+            checkbox.set_active(False)
+            checkbox.set_sensitive(False)
+
+            checkbox = self._wTree.get_widget("check2_mandatory")
+            checkbox.set_sensitive(True)
+
+    def _on_check_dependent_toggled(self, togglebutton):
+        """Controla la habilitacion y dehabilitacion de los check button
+        de la propiedad 'dependiente' para la relación
+        """
+
+        if togglebutton == self._wTree.get_widget("check1_dependent"):
+            check_dependent = self._wTree.get_widget("check2_dependent")
+
+        elif togglebutton == self._wTree.get_widget("check2_dependent"):
+            check_dependent = self._wTree.get_widget("check1_dependent")
+        else:
+            log.error("Could not be found the checkbutton")
+            return
+
+        if togglebutton.get_active():
+            check_dependent.set_active(False)
+            check_dependent.set_sensitive(False)
+        else:
+            check_dependent.set_sensitive(True)
+
+    def _on_btn_cancel_relationship_clicked(self, button):
+        win = self._wTree.get_widget("wndaddrelationship")
+
+        win.destroy()
+
+    def _on_btn_add_relationship_clicked(self, button):
+
+        # basic information of the relationship
+        entry = self._wTree.get_widget("entry_name")
+        name = entry.get_text()
+        if name == "":
+            self._show_dialog("Nombre Relación",
+                              "Debe ingresar el nombre de la relación",
+                              gtk.STOCK_DIALOG_WARNING)
+            return
+
+        entry = self._wTree.get_widget("entry_codename")
+        codename = entry.get_text()
+
+        if codename == "":
+            self._show_dialog("Codigo Relación",
+                              "Debe ingresar el codigo de la relación",
+                              gtk.STOCK_DIALOG_WARNING)
+            return
+
+        txt = self._wTree.get_widget("txt_description")
+        buff = txt.get_buffer()
+        description = buff.get_text(buff.get_start_iter(),
+                                    buff.get_end_iter())
+
+        ####
+        # entity 1
+        combo = self._wTree.get_widget("combo_entity1")
+        # message if not selected entity 1
+        if combo.get_active() == -1:
+            self._show_dialog("Seleccione Entidad",
+                              "Debe seleccionar las entidades que desea relacionar",
+                              gtk.STOCK_DIALOG_WARNING)
+            return
+
+        combo_model = combo.get_model()
+        iter_combo= combo_model.get_iter_from_string(str(combo.get_active()))
+
+        #get the codename of entity 1
+        codename_entity1 = combo_model.get_value(iter_combo, 1)
+
+        check_dependent = self._wTree.get_widget("check1_dependent")
+        dependent1 = check_dependent.get_active()
+
+        check_mandatory = self._wTree.get_widget("check1_mandatory")
+        mandatory1 = check_mandatory.get_active()
+
+        ####
+        # entity 2
+        combo = self._wTree.get_widget("combo_entity2")
+        # message if not selected entity 2
+        if combo.get_active() == -1:
+            self._show_dialog("Seleccione Entidad",
+                              "Debe seleccionar las entidades que desea relacionar",
+                              gtk.STOCK_DIALOG_WARNING)
+            return
+
+        iter_combo = combo_model.get_iter_from_string(str(combo.get_active()))
+        codename_entity2 = combo_model.get_value(iter_combo, 1)
+
+        check_dependent = self._wTree.get_widget("check2_dependent")
+        dependent2 = check_dependent.get_active()
+
+        check_mandatory = self._wTree.get_widget("check2_mandatory")
+        mandatory2 = check_mandatory.get_active()
+
+        # cardinality of the relationship
+        combo = self._wTree.get_widget("combo_cardinality")
+        #message if not selected a cardinality
+        if combo.get_active() == -1:
+            self._show_dialog("Seleccione Cardinalidad",
+                              "Debe seleccionar la cardinalidad para la relación",
+                              gtk.STOCK_DIALOG_WARNING)
+            return False
+
+        combo_model = combo.get_model()
+        iter_combo = combo_model.get_iter_from_string(str(combo.get_active()))
+
+        cardinality = combo_model.get_value(iter_combo, 1)
+
+
+        answer = self._control.add(name,
+                                   codename,
+                                   description,
+                                   codename_entity1,
+                                   dependent1,
+                                   mandatory1,
+                                   codename_entity2,
+                                   dependent2,
+                                   mandatory2,
+                                   cardinality)
+
+        #message dialog if add_relationsip returns an error
+        if not answer:
+            self._show_dialog("Relación",
+                              """Se ha producido un error inesperado
+                              No se pudo agregar la relación""",
+                              gtk.STOCK_DIALOG_INFO)
+            return False
+
+        self._window.destroy()
+        return True
+
+    def _show_dialog(self, title, msg, stock_img):
+        dialog = gtk.Dialog(title,
+                            self._window,
+                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                            (gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+        hbox = gtk.HBox()
+
+        image = gtk.Image()
+        image.set_from_stock(stock_img , gtk.ICON_SIZE_DIALOG)
+        hbox.pack_start(image)
+
+        label = gtk.Label(msg)
+
+        label.set_use_markup(True)
+        hbox.pack_start(label)
+
+        hbox.show_all()
+        dialog.vbox.pack_start(hbox)
+        dialog.run()
+        dialog.destroy()
+        return
 
 class ViewMainWindow:
     """Vista principal
 
-    En esta vista se despliegan los elementos más importantes del software como el canvas, la barra de herramientas y de menu, entre otros
+    En esta vista se despliegan los elementos más importantes del software
+    como el canvas, la barra de herramientas y de menu, entre otros.
 
     """
     def __init__(self,control, file_=None):
@@ -1431,9 +1758,9 @@ class ViewMainWindow:
     def _on_delete_main_window(self, widget, event):
         "callback conectado al evento 'delete' de la ventana principal"
 
-        widget = self._uimanager.get_widget("/menubar/File/Quit")
+        menu_option = self._uimanager.get_widget("/menubar/File/Quit")
 
-        widget.activate()
+        menu_option.activate()
         return True
 
     def _on_quit_selected(self, menuitem):
@@ -1573,68 +1900,9 @@ class ViewMainWindow:
         item = self._control.add_entity(0,0, filepath)
         canvas.add_child(item)
 
-    #BEGIN ADD RELATIONSHIP#
     def _on_add_relationship_clicked(self, menuitem):
-        modelpath = self._get_current_path()
-        entities_list = self._control.get_all_entities(modelpath)
+        self._control.add_relationship()
 
-        window_glade = gtk.glade.XML(resource_filename('rascase.resources.glade', 'wndaddrelationship.glade'))
-        #indow = window_glade.get_widget("wndaddrelationship")
-
-        entities_store = gtk.ListStore(gobject.TYPE_STRING, #name
-                                       gobject.TYPE_STRING) #codename
-
-        for x in entities_list:
-            entities_store.append([x[0],x[1]])
-
-        #combobox for entity 1
-        combo = window_glade.get_widget("combo_entity1")
-        combo.set_model(entities_store)
-        cell = gtk.CellRendererText()
-        combo.pack_start(cell, True)
-        combo.add_attribute(cell, 'text', 0)
-
-        #combobox for entity 2
-        combo = window_glade.get_widget("combo_entity2")
-        combo.set_model(entities_store)
-        cell = gtk.CellRendererText()
-        combo.pack_start(cell, True)
-        combo.add_attribute(cell, 'text', 0)
-
-        #combox for cardinality types
-        cardinalities_store = gtk.ListStore(gobject.TYPE_STRING, #name
-                                            gobject.TYPE_INT)    #code
-
-        cardinalities_store.append(['1 a 1', 0])
-        cardinalities_store.append(['1 a N', 1])
-        cardinalities_store.append(['N a 1', 2])
-        cardinalities_store.append(['N a N', 3])
-
-        combo = window_glade.get_widget("combo_cardinality")
-        combo.set_model(cardinalities_store)
-        cell = gtk.CellRendererText()
-        combo.pack_start(cell)
-        combo.add_attribute(cell, 'text', 0)
-
-        button = window_glade.get_widget("btn_cancel")
-        button.connect("clicked", self._on_btn_cancel_relationship_clicked, window_glade)
-
-        button = window_glade.get_widget("btn_add")
-        button.connect("clicked", self._on_btn_add_relationship_clicked, window_glade)
-
-        win = window_glade.get_widget("wndaddrelationship")
-        win.set_transient_for(self._window)
-        win.show_all()
-
-    def _on_btn_cancel_relationship_clicked(self, button, window_glade):
-        win = window_glade.get_widget("wndaddrelationship")
-
-        win.destroy()
-
-    def _on_btn_add_relationship_clicked(self, button, window_glade):
-        pass
-
-    #BEGIN ADD RELATIONSHIP#
     def on_add_inheritance_clicked(self, menuitem):
         pass
 
@@ -1864,7 +2132,7 @@ class ViewMainWindow:
         box.pack_start(toolbar, False)
         box.reorder_child(toolbar, 1)
 
-    def _get_current_path(self):
+    def get_current_path(self):
 
         ntbk = self._wTree.get_widget("ntbk_main")
 
@@ -1878,6 +2146,14 @@ class ViewMainWindow:
         for x in self._files_opened:
             if x[1] == canvas:
                 return x[0]
+
+        return None
+
+    def get_canvas_from_path(self, filepath):
+        "Retorna el canvas asociado a un archivo"
+        for x in self._files_opened:
+            if x[0] == filepath:
+                return x[1]
 
         return None
 
