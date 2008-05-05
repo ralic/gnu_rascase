@@ -215,7 +215,7 @@ class ConfigurationManager:
     def get_relationship_color(self):
         color = self._client.get_string(self._base_dir + '/relationship_color')
         if color == None:
-            color = int('ff0000ff', 16)
+            color = int('000000ff', 16)
 
         return int(color)
 
@@ -809,11 +809,17 @@ class Relationship(LogicalBase):
                 raise RuntimeError, "When creating a relationship from a xmlnode \
                 could not be located the entity 1 instance"
 
+            self.set_dependent1(xmlnode.getAttributeNS(XML_URI, "dependent1"))
+            self.set_mandatory1(xmlnode.getAttributeNS(XML_URI, "mandatory1"))
+
             ent = model.get_entity(xmlnode.getAttributeNS(XML_URI, "entity2"))
             self.set_entity2(ent)
             if self.get_entity2() == None:
                 raise RuntimeError, "When creating a relationship from a xmlnode \
                 could not be located the entity 2 instance"
+
+            self.set_dependent2(xmlnode.getAttributeNS(XML_URI, "dependent2"))
+            self.set_mandatory2(xmlnode.getAttributeNS(XML_URI, "mandatory2"))
 
             self.set_linecolor(xmlnode.getAttributeNS(XML_URI, "linecolor"))
 
@@ -866,6 +872,13 @@ class Relationship(LogicalBase):
         return self._dependent1
 
     def set_dependent1(self, value):
+        if value == 'True':
+            self._dependent1 = True
+            return
+        elif value == 'False':
+            self._dependent1 = False
+            return
+
         if isinstance(value, bool):
             self._dependent1 = value
         else:
@@ -876,6 +889,13 @@ class Relationship(LogicalBase):
         return self._dependent2
 
     def set_dependent2(self, value):
+        if value == 'True':
+            self._dependent2 = True
+            return
+        elif value == 'False':
+            self._dependent2 = False
+            return
+
         if isinstance(value, bool):
             self._dependent2 = value
         else:
@@ -886,6 +906,13 @@ class Relationship(LogicalBase):
         return self._mandatory1
 
     def set_mandatory1(self, value):
+        if value == 'True':
+            self._mandatory1 = True
+            return
+        elif value == 'False':
+            self._mandatory1 = False
+            return
+
         if isinstance(value, bool):
             self._mandatory1 = value
         else:
@@ -896,6 +923,13 @@ class Relationship(LogicalBase):
         return self._mandatory1
 
     def set_mandatory2(self, value):
+        if value == 'True':
+            self._mandatory2 = True
+            return
+        elif value == 'False':
+            self._mandatory2 = False
+            return
+
         if isinstance(value, bool):
             self._mandatory2 = value
         else:
@@ -924,8 +958,18 @@ class Relationship(LogicalBase):
         relation.setAttributeNS(uri, "ras:entity1",
                                 self.get_entity1().get_codename())
 
+        relation.setAttributeNS(uri, "ras:dependent1",
+                                str(self.is_dependent1()))
+        relation.setAttributeNS(uri, "ras:mandatory1",
+                                str(self.is_mandatory1()))
+
         relation.setAttributeNS(uri, "ras:entity2",
                                 self.get_entity2().get_codename())
+
+        relation.setAttributeNS(uri, "ras:dependent2",
+                                str(self.is_dependent2()))
+        relation.setAttributeNS(uri, "ras:mandatory2",
+                                str(self.is_mandatory2()))
 
         relation.setAttributeNS(uri, "ras:linecolor", str(self.get_linecolor()))
 

@@ -27,6 +27,7 @@ import gtk.glade
 import goocanvas
 import cairo
 import os
+import math
 ##logging system
 import logging
 log = logging.getLogger('views')
@@ -870,47 +871,226 @@ class RelationshipComponent(LineBaseComponent):
 
         from rascase.core import Relationship
 
-        # TODO: hacer que las lineas varien segun la configuracion de la relacion
-        #if self.cardinality == Relationship.CARDINALITY_
-
         if self._entity1.get_x() < self._entity2.get_x():
-            p1 = (x2-25, y2)
-            points_list.append(p1)
+            if self._cardinality == Relationship.CARDINALITY_1_N or \
+                   self._cardinality == Relationship.CARDINALITY_1_1:
+                if self._dependent1:
+                    p1 = (x1+5, y1)
+                    points_list.append(p1)
+                    points_list.append((p1[0]+10,p1[1]))
+                    points_list += self._do_triangle((p1[0]+10,p1[1]), p1, False)
+                    pf = p1
+                else:
+                    pf = (x1+15,y1)
+                    points_list.append(pf)
 
-            p2 = (p1[0] + 5, p1[1])
-            points_list.append(p2)
+            elif self._cardinality == Relationship.CARDINALITY_N_1 or \
+                     self._cardinality == Relationship.CARDINALITY_N_N:
+                if self._dependent1:
+                    points_list += self._do_pata_triangle((x1,y1),
+                                                          (x1+18,y1),
+                                                          right=False)
+                    pf = (x1+15, y1)
 
-            p3 = (p2[0] + 10, p2[1] - 10)
-            points_list.append(p3)
+                else:
+                    points_list += self._do_pata_gallo((x1+15, y1), (x1,y1))
+                    pf = (x1+15, y1)
 
-            p4 = (p3[0], p3[1] + 20)
-            points_list.append(p4)
+            if self._mandatory2:
+                p1 = (pf[0]+10, pf[1])
+                points_list.append(p1)
+                points_list += self._do_line(p1)
 
-            p5 = (p2[0], p2[1])
-            points_list.append(p5)
+            else:
+                h = pf[0]+15
+                k = pf[1]
+                r = 5
+                points_list += self._do_circle(h, k, r)
+
         else:
-            p1 = (x2+25, y2)
-            points_list.append(p1)
-
-            p2 = (p1[0] - 5, p1[1])
-            points_list.append(p2)
-
-            p3 = (p2[0] - 10, p2[1] - 10)
-            points_list.append(p3)
-
-            p4 = (p3[0], p3[1] + 20)
-            points_list.append(p4)
-
-            p5 = (p2[0], p2[1])
-            points_list.append(p5)
+            pass
 
         #finish variations
 
         points_list.append((x2,y2))
-        ## p2_x = p1_x + 10
-        ## p2_y = (y2-y1-x2+x1)/(y2-y1+x2-x1)*(p2_x-p1_x)+p1_y
 
         pts = goocanvas.Points(points_list)
+        return pts
+
+    def _one(self, pt_begin, pt_end):
+        pts = list()
+        if pt_begin[0] < pt_end[0]:
+            #entity 1 is on the left
+            dif = pt_end[0] - pt_begin[0]
+            p1 = (pt_begin[0]+dif/4, pt_begin[1])
+            pts.append(p1)
+
+            if self._mandatory2:
+                # draw a vertical line
+                pts += self._do_line(p1)
+            else:
+                # draw a little circle
+                # (x-h)^2 + (y-k)^2 = r^2
+                r = 5
+                h = p1[0]+5
+                k = p1[1]
+                pts += self._do_circle(h, k, r)
+        else:
+            #entity 1 is on the right
+            dif = pt_begin[0] - pt_end[0]
+            p1 = (pt_begin[0]-dif/4, pt_begin[1])
+            pts.append(p1)
+
+            if self._mandatory2:
+                # draw vertical line
+                pts += self._do_line(p1)
+
+            else:
+                # draw a little circle
+                # (x-h)^2 + (y-k)^2 = r^2
+                r = 5
+                h = p1[0]-5
+                k = p1[1]
+                pts += self._do_circle(h, k, r)
+
+        pts.append(pt_end)
+        return pts
+
+    def _do_line(self, p1):
+        pts = list()
+
+        p2 = (p1[0], p1[1] - 10)
+        pts.append(p2)
+
+        p3 = (p1[0], p1[1] + 10)
+        pts.append(p3)
+        pts.append(p1)
+        return pts
+
+    def _do_circle(self, h, k, r):
+        pts = list()
+        x = h-r
+        while x < h+r:
+            y = math.sqrt(25-math.pow(x-h,2))+k
+            pts.append((x,y))
+            x+=0.2 # the step
+
+        x = h-r
+        while x < h+r:
+            y = -math.sqrt(25-math.pow(x-h,2))+k
+            pts.append((x,y))
+            x+=0.2 # the step
+
+        return pts
+
+    def _do_triangle(self, pt_begin, pt_end, left_at_end=True):
+        pts = list()
+        if pt_begin[0] < pt_end[0]:
+            #  /|
+            #  \|
+            p1 = (pt_begin[0]+10, pt_begin[1]-10)
+            pts.append(p1)
+
+            p2 = (p1[0], p1[1]+20)
+            pts.append(p2)
+            pts.append(pt_begin)
+            if left_at_end:
+                pts.append(p2)
+
+                p3 = (p2[0], p2[1]-10)
+                pts.append(p3)
+        else:
+            # |\
+            # |/
+            p1 = (pt_begin[0]-10, pt_begin[1]-10)
+            pts.append(p1)
+
+            p2 = (p1[0], p1[1]+20)
+            pts.append(p2)
+            pts.append(pt_begin)
+
+            if left_at_end:
+                pts.append(p2)
+
+                p3 = (p2[0], p2[1]-10)
+                pts.append(p3)
+
+        return pts
+
+    def _do_pata_triangle(self, pt_begin, pt_end, right=True):
+        pts = list()
+
+        if right:
+            #    /|-
+            # -<  |-
+            #    \|-
+            p0 = (pt_end[0]-5, pt_end[1])
+            pts += self._do_triangle(pt_begin, p0)
+            p1 = (p0[0], p0[1]-3)
+            pts.append(p1)
+
+            p2 = (p1[0]+5, p1[1])
+            pts.append(p2)
+            pts.append(p1)
+
+            p3 = (p1[0], p1[1]+6)
+            pts.append(p3)
+
+            p4 = (p3[0]+5, p3[1])
+            pts.append(p4)
+            pts.append(p3)
+            pts.append(p0)
+            pts.append(pt_end)
+
+        else:
+            # -|\
+            # -| >-
+            # -|/
+            p0 = (pt_begin[0]+8, pt_begin[1])
+            pts.append(p0)
+
+            p1 = (p0[0], p0[1]-5)
+            pts.append(p1)
+
+            p2 = (p1[0]-8, p1[1])
+            pts.append(p2)
+            pts.append(p1)
+
+            p3 = (p1[0], p1[1]+10)
+            pts.append(p3)
+
+            p4 = (p3[0]-8, p3[1])
+            pts.append(p4)
+            pts.append(p3)
+            pts.append(p0)
+            pts.append(pt_end)
+            pts += self._do_triangle(pt_end, p0, False)
+
+        return pts
+
+    def _do_pata_gallo(self, pt_begin, pt_end, left_at_end=True):
+
+        pts = list()
+
+        pts.append(pt_end)
+        pts.append(pt_begin)
+
+        p1 = (pt_end[0], pt_end[1]-5)
+        pts.append(p1)
+        pts.append(pt_begin)
+
+        p2 = (pt_end[0], pt_end[1]+5)
+        pts.append(p2)
+        pts.append(pt_begin)
+
+        if left_at_end:
+            pts.append(pt_end)
+
+        ## else:
+        ##     #  \
+        ##     # ---
+        ##     #  /
+        ##     pts.append(pt_end)
 
         return pts
 
