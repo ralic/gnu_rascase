@@ -29,7 +29,6 @@ setup(name="Rascase",
       description="A simple tool to develop Entity-Relationship models",
       author="Felipe Reyes",
       author_email="felipereyes@gmail.com",
-      url="http://rascase.linuxdiinf.org",
       packages=['rascase'],
       package_data={
         'rascase':
