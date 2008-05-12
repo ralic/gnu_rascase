@@ -1,0 +1,27 @@
+The Rascase source code comes with a Python style installation method, using 
+setuptools.
+
+Build
+The build step is necessary even when running from source so as to ensure that 
+the extensions are built.
+
+$ python setup.py build
+	
+Install
+Installation is the recommended method to run Rascase. If you want to run it
+from the source you should jump to the Developers section.
+
+# python setup.py install
+	
+You may need to use sudo or equivalent to obtain superuser access if you are
+installing to a global location.
+
+Developers
+If you want to develop rascase, the recommended method to let available the
+python modules that comes with the project, is run the following command.
+
+# python setup.py develop
+
+With this the setup will put just a link that points the sources, so if you
+change content of some of the file you can just run rascase, because the
+changed will be available immediately.
