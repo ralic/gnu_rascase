@@ -1,6 +1,7 @@
-Rascase is the result of my project degree, 
-i am doing this with the intention of learn more about the database design 
-and to give a simple tool to the FLOSS community.
+Rascase is free software as in free speech.
+
+I'm doing this with the intention of learn more about the database design 
+and to give a simple tool to the free software communities.
 
 This tool is mainly focused on the design of entity-relationship models, and
 not in the development of physical data models, but this second feature will not
@@ -8,7 +9,6 @@ be excluded of rascase.
 
 The requirements to run rascase are at least:
 * pygtk 2.12
-* pyodf
 * pygoocanvas
 
 NOTE: some dependencies could be added without warning until the first release 
