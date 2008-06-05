@@ -11,3 +11,6 @@ Rascase.egg-info/*
 #ignore the backup files produced by emacs
 \#*\#
 .\#*
+
+#for rope
+rascase/.ropeproject/
