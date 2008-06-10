@@ -478,11 +478,10 @@ class DragBox(goocanvas.Rect):
 
 
 class RectangleComponent(RectBaseComponent):
-    def __init__(self):
-        RectBaseComponent.__init__(self)
+    def __init__(self, **kwargs):
+        RectBaseComponent.__init__(self, **kwargs)
         self._transparency = 0.0
         self.set_fillcolor(TRANSPARENT_COLOR)
-        print self.get_fillcolor()
 
     def set_transparency(self, opacity):
         pass
