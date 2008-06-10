@@ -68,42 +68,31 @@ TANGO_COLOR_ALUMINIUM2_MID = int("555753ff",16)
 TANGO_COLOR_ALUMINIUM2_DARK = int("2e3436ff",16)
 TRANSPARENT_COLOR = int("000000",16)
 
-class RectBaseComponent(goocanvas.Group):
+class RectBaseComponent(goocanvas.ItemSimple, goocanvas.Item):
     __gsignals__ = {
         'on-movement': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'on-double-click': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'changed-dimensions': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
         }
 
-    def __init__(self, width=100, height=200):
-        goocanvas.Group.__init__(self,can_focus = True)
+    def __init__(self, width=100, height=200, **kwargs):
+        super(RectBaseComponent, self).__init__(**kwargs)
 
-        self._body = goocanvas.Rect(parent=self,
-                                    width=width,
-                                    height=height,
-                                    line_width=1.0,
-                                    fill_color_rgba=TANGO_COLOR_SKYBLUE_LIGHT,
-                                    stroke_color="black",
-                                    antialias=cairo.ANTIALIAS_DEFAULT)
+        ## self._body = goocanvas.Rect(parent=self,
+        ##                             width=width,
+        ##                             height=height,
+        ##                             line_width=1.0,
+        ##                             fill_color_rgba=TANGO_COLOR_SKYBLUE_LIGHT,
+        ##                             stroke_color="black",
+        ##                             antialias=cairo.ANTIALIAS_DEFAULT)
 
         self._x = 0
         self._y = 0
-        self.translate(self._x, self._y)
+        self.width = width
+        self.height = height
+        self.translate(self.x, self.y)
 
         self._dragging= False
-        self.dragbox = {
-            'NW': DragBox('NW',-5,-5),
-            'N' : DragBox('N', width/2-2.5, -5),
-            'NE': DragBox('NE',width-5, -5),
-            'E' : DragBox('E', width-5, height/2-2.5),
-            'SE': DragBox('SE',width-5, height-5),
-            'S' : DragBox('S', width/2-2.5, height-5),
-            'SW': DragBox('SW',-5, height-5),
-            'W' : DragBox('W', -5, height/2-2.5)
-            }
-
-        for item in self.dragbox.keys():
-            self.add_child(self.dragbox[item])
 
         #signals del foco
         self.connect("focus_in_event", self._on_focus_in)
@@ -115,74 +104,69 @@ class RectBaseComponent(goocanvas.Group):
 
     def set_x(self, x):
         self.translate(float(x)-self._x,0)
+        self._x = x
 
     def get_x(self):
         return self._x
 
     def set_y(self, y):
         self.translate(0, y-self._y)
+        self._y = y
 
     def get_y(self):
         return self._y
 
     def translate(self, diff_x, diff_y):
-        goocanvas.Group.translate(self, diff_x, diff_y)
+        goocanvas.ItemSimple.translate(self, diff_x, diff_y)
         self._x += diff_x
         self._y += diff_y
 
     def set_width(self, width):
-        if hasattr(self, "_bg"):
-            self._bg.set_property("width", float(width))
-        else:
-            self._body.set_property("width", float(width))
+        assert width is not None
+
+        self._width = float(width)
 
     def get_width(self):
-        if hasattr(self, "_bg"):
-            return self._bg.get_property("width")
-        else:
-            return self._body.get_property("width")
+        return self._width
 
     def set_height(self, height):
-        if hasattr(self, "_bg"):
-            self._bg.set_property("height", float(height))
-        else:
-            self._bg.set_property("height", float(height))
+        assert height is not None
+
+        self._height = float(height)
 
     def get_height(self):
-        if hasattr(self, "_bg"):
-            return self._bg.get_property("height")
-        else:
-            return self._body.get_property("height")
+        return self._height
 
     def set_linecolor(self, color):
 
-        self._linecolor = color
-
         if isinstance(color, str) or isinstance(color, unicode):
-            self._body.set_property("stroke-color", color)
+            print "aki"
+            self.set_property("stroke-color", color)
         elif isinstance(color, int) or isinstance(color, long):
-            self._body.set_property("stroke-color-rgba", color)
+            self.set_property("stroke-color-rgba", color)
         else:
             log.error("passing %s to set_linecolor (%s)", color, type(color))
 
+        self._linecolor = self.get_property("stroke-color-rgba")
+
     def get_linecolor(self):
-        return self._linecolor
+        return self.get_property("stroke-color-rgba")
 
     def set_linewidth(self, width):
-        self._body.set_property("line-width", width)
+        self.set_property("line-width", width)
 
     def get_linewidth(self):
-        return self._body.get_property("line-width")
+        return self.get_property("line-width")
 
     def set_fillcolor(self, color):
 
         self._fillcolor = color
 
         if isinstance(color, str):
-            self._body.set_property("fill-color", color)
+            self.set_property("fill-color", color)
         elif isinstance(color, int) or isinstance(color, long):
             print "color: ", color
-            self._body.set_property("fill-color-rgba", color)
+            self.set_property("fill-color-rgba", color)
         else:
             log.debug("passing %s to set_linecolor", color)
 
@@ -204,20 +188,19 @@ class RectBaseComponent(goocanvas.Group):
             self.emit("on-double-click")
 
     def _on_focus_in (self, item, target_item, event):
-        for aux in self.dragbox.keys():
-            self.dragbox[aux].props.visibility = goocanvas.ITEM_VISIBLE
+        if hasattr(self, "_old_linecolor"):
+            return
+
+        self._old_linecolor = self.get_linecolor()
+        self.set_linecolor(0x000000FF)
 
     def _on_focus_out (self, item, target_item, event):
-        for aux in self.dragbox.keys():
-            self.dragbox[aux].props.visibility = goocanvas.ITEM_HIDDEN
+        self.set_linecolor(self._old_linecolor)
+        del self._old_linecolor
 
     def _on_button_press(self,item,target,event):
         canvas = item.get_canvas()
         canvas.grab_focus(item)
-
-        for aux in self.dragbox.keys():
-            if self.dragbox[aux].is_dragging():
-                return True
 
         self._dragging = True
         fleur = gtk.gdk.Cursor(gtk.gdk.FLEUR)
@@ -230,9 +213,6 @@ class RectBaseComponent(goocanvas.Group):
         return True
 
     def _on_button_release(self,item,target,event):
-        for aux in self.dragbox.keys():
-            if self.dragbox[aux].is_dragging():
-                return True
 
         self._dragging = False
         canvas = item.get_canvas ()
@@ -240,11 +220,6 @@ class RectBaseComponent(goocanvas.Group):
         return True
 
     def _on_motion(self,item,target,event):
-        for aux in self.dragbox.keys():
-            if self.dragbox[aux].is_dragging():
-                return True
-
-        canvas = item.get_canvas ()
 
         if not (event.state == gtk.gdk.BUTTON1_MASK) and not self._dragging:
             return False
@@ -253,6 +228,16 @@ class RectBaseComponent(goocanvas.Group):
         new_y = event.y
         item.translate (new_x - self.drag_x, new_y - self.drag_y)
         self.emit("on-movement")
+
+    ### item implementation
+
+    def do_simple_create_path(self, cr):
+        cr.rectangle(0, 0, self.width, self.height)
+
+    x = property(get_x, set_x, None, "The x coordinate of the item")
+    y = property(get_y, set_y, None, "The y coordinate of the item")
+    width = property(get_width, set_width, None, "The width of the item")
+    height = property(get_height, set_height, None, "The height of the item")
 
 class DragBox(goocanvas.Rect):
 
