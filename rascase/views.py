@@ -28,8 +28,11 @@ import gtk
 import gtk.glade
 import goocanvas
 import cairo
+import pangocairo
+import pango
 import os
 import math
+import color
 ##logging system
 import logging
 log = logging.getLogger('views')
@@ -75,23 +78,38 @@ class RectBaseComponent(goocanvas.ItemSimple, goocanvas.Item):
         'changed-dimensions': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
         }
 
-    def __init__(self, width=100, height=200, **kwargs):
-        super(RectBaseComponent, self).__init__(**kwargs)
+    def __init__(self, **kwargs):
 
-        ## self._body = goocanvas.Rect(parent=self,
-        ##                             width=width,
-        ##                             height=height,
-        ##                             line_width=1.0,
-        ##                             fill_color_rgba=TANGO_COLOR_SKYBLUE_LIGHT,
-        ##                             stroke_color="black",
-        ##                             antialias=cairo.ANTIALIAS_DEFAULT)
 
-        self._x = 0
-        self._y = 0
-        self.width = width
-        self.height = height
+        ### properties
+        if 'width' in kwargs:
+            self.width = kwargs['width']
+            del kwargs['width']
+        else:
+            self.width = 100
+
+        if 'height' in kwargs:
+            self.height = kwargs['height']
+            del kwargs['height']
+        else:
+            self.height = 200
+
+        if 'x' in kwargs:
+            self._x = kwargs['x']
+            del kwargs['x']
+        else:
+            self._x = 0
+
+        if 'y' in kwargs:
+            self._y = kwargs['y']
+            del kwargs['y']
+        else:
+            self._y = 0
+
+        goocanvas.ItemSimple.__init__(self, **kwargs)
+
         self.translate(self.x, self.y)
-
+        self.line_width = self.get_property("line-width")
         self._dragging= False
 
         #signals del foco
@@ -140,7 +158,6 @@ class RectBaseComponent(goocanvas.ItemSimple, goocanvas.Item):
     def set_linecolor(self, color):
 
         if isinstance(color, str) or isinstance(color, unicode):
-            print "aki"
             self.set_property("stroke-color", color)
         elif isinstance(color, int) or isinstance(color, long):
             self.set_property("stroke-color-rgba", color)
@@ -165,7 +182,6 @@ class RectBaseComponent(goocanvas.ItemSimple, goocanvas.Item):
         if isinstance(color, str):
             self.set_property("fill-color", color)
         elif isinstance(color, int) or isinstance(color, long):
-            print "color: ", color
             self.set_property("fill-color-rgba", color)
         else:
             log.debug("passing %s to set_linecolor", color)
@@ -487,17 +503,49 @@ class RectangleComponent(RectBaseComponent):
         pass
 
 class LabelComponent(RectBaseComponent):
-    def __init__(self, control):
-        RectBaseComponent.__init__(self)
-        self._control = control
-        # set the default color of the labels
-        # TODO: use gconf to let the preferences selected by the user modify this
-        self.set_fillcolor(TANGO_COLOR_BUTTER_LIGHT)
 
-        self._bg = goocanvas.Text(parent=self,
-                                    text="<b>Etiqueta</b>",
-                                    use_markup=True,
-                                    font="DejaVu Sans normal 8") #the font need to be parametrized with gconf
+    def __init__(self, control, **kwargs):
+
+        ### setup properties
+
+        #text
+        if 'text' in kwargs:
+            self.text = unicode(kwargs['text'])
+            del kwargs['text']
+        else:
+            self.text = "Label"
+
+        #use_markup
+        if 'use_markup' in kwargs:
+            self.use_markup = unicode(kwargs['use_markup'])
+            del kwargs['use_markup']
+        else:
+            self.use_markup = False
+
+        #font
+        if 'font' in kwargs:
+            self.font = unicode(kwargs['font'])
+            del kwargs['font']
+        else:
+            self.font = 'Sans'
+
+        #font_size
+        if 'font_size' in kwargs:
+            self.font_size = float(kwargs['font_size'])
+            del kwargs['font_size']
+        else:
+            self.font_size = 10.0
+
+        #text_color
+        if 'text_color' in kwargs:
+            self.text_color = gtk.gdk.color_parse(kwargs['text_color'])
+            del kwargs['text_color']
+        else:
+            self.text_color = gtk.gdk.Color(0, 0, 1)
+
+
+        RectBaseComponent.__init__(self, **kwargs)
+        self._control = control
 
         self.connect("on-double-click", self._on_edit_label_selected)
 
@@ -523,6 +571,66 @@ class LabelComponent(RectBaseComponent):
     def _on_edit_label_selected(self, item):
         #self._control.
         pass
+
+    ### item implementation
+    def do_simple_paint(self, cr, bounds):
+        cr.move_to(10,20)
+        pangocr = pangocairo.CairoContext(cr)
+        layout = pangocr.create_layout()
+
+        if self.use_markup:
+            layout.set_markup(self.text)
+        else:
+            layout.set_text(self.text)
+
+        layout.set_wrap(pango.WRAP_WORD)
+        layout.set_width(int(self.width*pango.SCALE))
+        needed_height = layout.get_size()[1]/pango.SCALE
+        if self.height < needed_height:
+            self.height = needed_height
+
+        self.bounds.x1 = float(self.x)
+        self.bounds.y1 = float(self.y)
+        self.bounds.x2 = float(self.width) +200
+        self.bounds.y2 = float(self.height)+200
+
+        RectBaseComponent.do_simple_paint(self, cr, bounds)
+
+        desc = pango.FontDescription("%s %s" % (self.font, str(self.font_size)))
+        layout.set_font_description(desc)
+        cr.set_source_rgb (color.gdk2rgb(self.text_color)[0],
+                           color.gdk2rgb(self.text_color)[1],
+                           color.gdk2rgb(self.text_color)[2])
+        #pangocairo.CairoContext.update_layout(layout)
+        pangocr.update_layout(layout)
+        #pangocairo.CairoContext.show_layout(layout)
+        pangocr.show_layout(layout)
+        pangocr.layout_path(layout)
+        ## cr.move_to(self.line_width + 5, self.line_width + 10)
+
+        ## cr.set_source_rgb (color.gdk2rgb(self.text_color)[0],
+        ##                    color.gdk2rgb(self.text_color)[1],
+        ##                    color.gdk2rgb(self.text_color)[2])
+
+        ## cr.select_font_face(self.font,
+        ##                     cairo.FONT_SLANT_NORMAL,
+        ##                     cairo.FONT_WEIGHT_BOLD)
+
+        ## cr.set_font_size(self.font_size)
+        ## cr.show_text (self.text)
+
+
+    def do_simple_update (self, cr):
+
+        RectBaseComponent.do_simple_update(self, cr)
+        half_lw = self.line_width/2
+        self.bounds.x1 = float(self.x - half_lw)
+        self.bounds.y1 = float(self.y - half_lw)
+        self.bounds.x2 = float(self.x + self.width + half_lw)
+        self.bounds.y2 = float(self.y + self.height + half_lw)
+        return None
+
+gobject.type_register(LabelComponent)
 
 
 class EntityComponent(RectBaseComponent):
