@@ -255,6 +255,8 @@ class RectBaseComponent(goocanvas.ItemSimple, goocanvas.Item):
     width = property(get_width, set_width, None, "The width of the item")
     height = property(get_height, set_height, None, "The height of the item")
 
+gobject.type_register(RectBaseComponent)
+
 class DragBox(goocanvas.Rect):
 
     def __init__(self,name,x,y):
@@ -501,6 +503,8 @@ class RectangleComponent(RectBaseComponent):
 
     def set_transparency(self, opacity):
         pass
+
+gobject.type_register(RectangleComponent)
 
 class LabelComponent(RectBaseComponent):
 
