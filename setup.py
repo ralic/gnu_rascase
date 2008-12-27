@@ -1,4 +1,4 @@
-#!/usr/bin/python2.4
+#!/usr/bin/python2.5
 ##
 ## setup.py
 ## Login : <freyes@yoda.>
