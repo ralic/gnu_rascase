@@ -1,6 +1,6 @@
 # coding=utf-8
 ##
-## base.py
+## views.py
 ## Login : <freyes@yoda>
 ## Started on  Tue Jan 22 11:29:49 2008 Felipe Reyes
 ## $Id$
