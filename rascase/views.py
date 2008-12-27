@@ -1243,6 +1243,25 @@ class Canvas(goocanvas.Canvas):
         self.set_bounds(0, 0, 800, 700)
         root = self.get_root_item()
         self.set_root_item(root)
+
+        self.grid = goocanvas.Grid(parent=root,
+                                   x=self.get_bounds()[0],
+                                   y=self.get_bounds()[1],
+                                   width=self.get_bounds()[2],
+                                   height=self.get_bounds()[3],
+                                   x_step=20,
+                                   y_step=20,
+                                   x_offset=0,
+                                   y_offset=0,
+                                   horz_grid_line_width=1.0,
+                                   horz_grid_line_color="grey",
+                                   vert_grid_line_width=1.0,
+                                   vert_grid_line_color="grey",
+                                   #border_width=0.0,
+                                   #border_color="white",
+                                   #fill_color="blue"
+                                   )
+
         self.show()
 
         self.scrolled_win.add(self)
